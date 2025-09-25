@@ -1,0 +1,32 @@
+version: "3.8"
+services:
+  postgres:
+    image: postgres:13-alpine
+    environment:
+      POSTGRES_DB: mockdb
+      POSTGRES_USER: mockuser
+      POSTGRES_PASSWORD: mockpass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  mongodb:
+    image: mongo:5
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+
+volumes:
+  postgres_data:
+  mongo_data:
+  redis_data:
