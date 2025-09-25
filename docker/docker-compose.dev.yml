@@ -3,25 +3,25 @@ services:
   postgres:
     image: postgres:13-alpine
     environment:
-      POSTGRES_DB: mockdb
-      POSTGRES_USER: mockuser
-      POSTGRES_PASSWORD: mockpass
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
-      - "5432:5432"
+      - "${DB_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
   mongodb:
     image: mongo:5
     ports:
-      - "27017:27017"
+      - "${MONGO_PORT}:27017"
     volumes:
       - mongo_data:/data/db
 
   redis:
     image: redis:alpine
     ports:
-      - "6379:6379"
+      - "${REDIS_PORT}:6379"
     command: redis-server --appendonly yes
     volumes:
       - redis_data:/data
