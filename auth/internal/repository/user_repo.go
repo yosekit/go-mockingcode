@@ -36,11 +36,14 @@ func (r *UserRepository) CreateUser(user *model.User) error {
     return nil
 }
 
-func (r *UserRepository) FindUserByEmail(email string) (*model.User, error) {
-    query := `SELECT id, email, password, created_at, updated_at FROM users WHERE email = $1`
+func (r *UserRepository) FindUser(whereClause string, args ...any) (*model.User, error) {
+    query := `
+        SELECT id, email, password, created_at, updated_at 
+        FROM users 
+        WHERE ` +  whereClause
     
     user := &model.User{}
-    err := r.db.QueryRow(query, email).Scan(
+    err := r.db.QueryRow(query, args...).Scan(
         &user.ID,
         &user.Email,
         &user.Password,
@@ -56,6 +59,14 @@ func (r *UserRepository) FindUserByEmail(email string) (*model.User, error) {
     }
 
     return user, nil
+}
+
+func (r *UserRepository) FindUserByID(id int64) (*model.User, error) {
+    return r.FindUser("id = $1", id)
+}
+
+func (r *UserRepository) FindUserByEmail(email string) (*model.User, error) {
+    return r.FindUser("email = $1", email)
 }
 
 func (r *UserRepository) InitSchema() error {

@@ -22,14 +22,18 @@ func main() {
 	}
 	defer db.Close()
 
-	// Init DB schema
+	// Init DB schemas
 	userRepo := repository.NewUserRepository(db)
 	if err := userRepo.InitSchema(); err != nil {
 		log.Fatal("Failed to init schema:", err)
 	}
+	tokenRepo := repository.NewTokenRepository(db)
+    if err := tokenRepo.InitSchema(); err != nil {
+        log.Fatal("Failed to init token schema:", err)
+    }
 
 	// Init Services
-	authService := service.NewAuthService(userRepo, cfg.JWTSecret)
+	authService := service.NewAuthService(userRepo, tokenRepo, cfg)
 	authHandler := handler.NewAuthHandler(authService)
 
 	// Route Settings
@@ -37,6 +41,8 @@ func main() {
 	mux.HandleFunc("/health", healthHandler)
 	mux.HandleFunc("/register", authHandler.Register)
 	mux.HandleFunc("/login", authHandler.Login)
+    mux.HandleFunc("/refresh", authHandler.Refresh)
+    mux.HandleFunc("/logout", authHandler.Logout)
 
 	port := os.Getenv("PORT")
 	if port == "" {

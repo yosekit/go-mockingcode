@@ -21,7 +21,17 @@ type LoginRequest struct {
 }
 
 type AuthResponse struct {
-    UserID int64  `json:"user_id"`
-    Email  string `json:"email"`
-    Token  string `json:"token"`
+    UserID       int64  `json:"user_id"`
+    Email        string `json:"email"`
+    AccessToken  string `json:"access_token"`
+    RefreshToken string `json:"refresh_token"`
+    ExpiresAt    int64  `json:"expires_at"` // Unix timestamp
+}
+
+type RefreshToken struct {
+    ID        int64     `json:"id"`
+    UserID    int64     `json:"user_id"`
+    Token     string    `json:"token"`
+    ExpiresAt time.Time `json:"expires_at"`
+    CreatedAt time.Time `json:"created_at"`
 }

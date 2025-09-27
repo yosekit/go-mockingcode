@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"time"
 )
 
 type Config struct {
@@ -12,11 +13,15 @@ type Config struct {
     DBPassword string
     DBName     string
     
+    DBMaxOpenConns int
+    DBMaxIdleConns int
+    DBMaxLifetime  time.Duration
+
     ServerPort string
     JWTSecret  string
     
-    RedisURL   string
-    RedisPort  string
+    AccessTokenExpiry  time.Duration
+    RefreshTokenExpiry time.Duration
 }
 
 func Load() *Config {
@@ -26,12 +31,16 @@ func Load() *Config {
         DBUser:     getEnv("DB_USER", "mockuser"),
         DBPassword: getEnv("DB_PASSWORD", "mockpass"),
         DBName:     getEnv("DB_NAME", "mockdb"),
-        
-        ServerPort: getEnv("AUTH_PORT", "8081"),
+
+        DBMaxOpenConns: getEnvInt("DB_MAX_OPEN_CONNS", 25),
+        DBMaxIdleConns: getEnvInt("DB_MAX_IDLE_CONNS", 25),
+        DBMaxLifetime:  getEnvDuration("DB_MAX_LIFETIME", 5*time.Minute),
+
+        ServerPort: getEnv("PORT", "8081"),
         JWTSecret:  getEnv("JWT_SECRET", "super-secret-jwt-key"), // TODO
-        
-        RedisURL:   getEnv("REDIS_URL", "localhost:6379"),
-        RedisPort:  getEnv("REDIS_PORT", "6379"),
+
+        AccessTokenExpiry:  getEnvDuration("ACCESS_TOKEN_EXPIRY", 15*time.Minute),
+        RefreshTokenExpiry: getEnvDuration("REFRESH_TOKEN_EXPIRY", 7*24*time.Hour),
     }
 }
 
@@ -46,6 +55,15 @@ func getEnvInt(key string, defaultValue int) int {
     if value := os.Getenv(key); value != "" {
         if intValue, err := strconv.Atoi(value); err == nil {
             return intValue
+        }
+    }
+    return defaultValue
+}
+
+func getEnvDuration(key string, defaultValue time.Duration) time.Duration {
+    if value := os.Getenv(key); value != "" {
+        if duration, err := time.ParseDuration(value); err == nil {
+            return duration
         }
     }
     return defaultValue
