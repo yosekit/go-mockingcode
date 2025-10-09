@@ -10,13 +10,22 @@ import (
 	authctx "github.com/go-mockingcode/project/internal/pkg/context"
 )
 
+var (
+	PublicPaths = []string{
+		"/health",
+		"/swagger/",
+	}
+)
+
 func AuthMiddleware(authClient *auth.AuthClient) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			// Пропускаем публичные эндпоинты
-			if r.URL.Path == "/health" {
-				next.ServeHTTP(w, r)
-				return
+			for _, path := range PublicPaths {
+				if r.URL.Path == path || strings.HasPrefix(r.URL.Path, path) {
+					next.ServeHTTP(w, r)
+					return
+				}
 			}
 
 			authHeader := r.Header.Get("Authorization")

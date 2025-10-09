@@ -12,8 +12,30 @@ import (
 	"github.com/go-mockingcode/project/internal/repository"
 	"github.com/go-mockingcode/project/internal/service"
 	"github.com/joho/godotenv"
+
+	_ "github.com/go-mockingcode/project/docs"
+
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
+// @title MockingCode Project Service API
+// @version 1.0
+// @description Project management service for MockingCode platform
+// @termsOfService http://mockingcode.dev/terms/
+
+// @contact.name API Support
+// @contact.url http://mockingcode.dev/support
+// @contact.email support@mockingcode.dev
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8082
+// @BasePath /
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Enter the token with the `Bearer ` prefix, e.g. "Bearer abcde12345"
 func main() {
 	// DEV
 	if err := godotenv.Load(".env"); err != nil {
@@ -59,13 +81,17 @@ func main() {
 
 	// Route Settings
 	mux := http.NewServeMux()
+
+	// Health Check
 	mux.HandleFunc("/health", healthHandler)
+	// Swagger
+	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 
 	// Middleware Settings
 	handlerWithAuth := middleware.AuthMiddleware(authClient)(mux)
 
 	// Handler Settings
-	mux.HandleFunc("/projects", projectHandler.HandleProjects)
+	mux.HandleFunc("/projects", projectHandler.HandlerProjects)
 	mux.HandleFunc("/projects/", projectHandler.HandleProjectByID)
 	mux.HandleFunc("/projects/{id}/collections", projectHandler.HandleProjectCollections)
 

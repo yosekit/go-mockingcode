@@ -2,7 +2,7 @@ package model
 
 import "time"
 
-// Collection - коллекция/схема в проекте
+// Collection represents a data collection in project
 type Collection struct {
 	ID          int64     `json:"id"`
 	ProjectID   int64     `json:"project_id"`
@@ -14,6 +14,7 @@ type Collection struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
+// CreateCollectionRequest represents collection creation data
 type CreateCollectionRequest struct {
 	Name        string         `json:"name" validate:"required,min=1,max=50"`
 	Description string         `json:"description" validate:"max=500"`

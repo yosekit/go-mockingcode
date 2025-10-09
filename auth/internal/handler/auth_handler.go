@@ -17,7 +17,17 @@ func NewAuthHandler(authService *service.AuthService) *AuthHandler {
 	return &AuthHandler{authService: authService}
 }
 
-// Register - create user + auto login
+// Register godoc
+// @Summary Register a new user
+// @Description Create a new user account and automatically login
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body model.RegisterRequest true "Registration data"
+// @Success 201 {object} model.AuthResponse
+// @Failure 400 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Router /register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeErrorJson(w, http.StatusMethodNotAllowed, "Method not allowed")
@@ -48,6 +58,17 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+// Login godoc
+// @Summary Login user
+// @Description Authenticate user and return JWT tokens
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body model.LoginRequest true "Login credentials"
+// @Success 200 {object} model.AuthResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeErrorJson(w, http.StatusMethodNotAllowed, "Method not allowed")
@@ -69,6 +90,17 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	writeSuccessJson(w, http.StatusOK, response)
 }
 
+// Refresh godoc
+// @Summary Refresh JWT tokens
+// @Description Get new access and refresh tokens using refresh token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body map[string]string true "Refresh token"
+// @Success 200 {object} model.AuthResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /refresh [post]
 func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeErrorJson(w, http.StatusMethodNotAllowed, "Method not allowed")
@@ -92,6 +124,16 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	writeSuccessJson(w, http.StatusOK, response)
 }
 
+// Validate godoc
+// @Summary Validate JWT token
+// @Description Validate JWT token and return user information
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Success 200 {object} map[string]interface{}
+// @Failure 401 {object} map[string]string
+// @Router /validate [get]
 func (h *AuthHandler) Validate(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		writeErrorJson(w, http.StatusMethodNotAllowed, "Method not allowed")
@@ -123,6 +165,16 @@ func (h *AuthHandler) Validate(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// Logout godoc
+// @Summary Logout user
+// @Description Invalidate refresh token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body map[string]string true "Refresh token"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Router /logout [post]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		writeErrorJson(w, http.StatusMethodNotAllowed, "Method not allowed")

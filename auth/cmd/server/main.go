@@ -11,8 +11,29 @@ import (
 	"github.com/go-mockingcode/auth/internal/repository"
 	"github.com/go-mockingcode/auth/internal/service"
 	"github.com/joho/godotenv"
+
+	_ "github.com/go-mockingcode/auth/docs"
+
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
+// @title MockingCode Auth Service API
+// @version 1.0
+// @description Authentication service for MockingCode platform
+// @termsOfService http://mockingcode.dev/terms/
+
+// @contact.name API Support
+// @contact.url http://mockingcode.dev/support
+// @contact.email support@mockingcode.dev
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8081
+// @BasePath /
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	// DEV
 	if err := godotenv.Load(".env"); err != nil {
@@ -45,7 +66,13 @@ func main() {
 
 	// Route Settings
 	mux := http.NewServeMux()
+
+	// Health Check
 	mux.HandleFunc("/health", healthHandler)
+	// Swagger
+	mux.Handle("/swagger/", httpSwagger.WrapHandler)
+
+	// Auth Handlers
 	mux.HandleFunc("/register", authHandler.Register)
 	mux.HandleFunc("/login", authHandler.Login)
 	mux.HandleFunc("/refresh", authHandler.Refresh)
