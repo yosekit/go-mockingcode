@@ -23,6 +23,8 @@ type Config struct {
 	MaxProjectsPerUser   int
 	MaxSchemasPerProject int
 
+	BaseURLFormat string
+
 	// External Service
 	AuthServiceURL string
 }
@@ -43,6 +45,8 @@ func Load() *Config {
 
 		MaxProjectsPerUser:   env.GetInt("MAX_PROJECTS_PER_USER", 10),
 		MaxSchemasPerProject: env.GetInt("MAX_SCHEMAS_PER_PROJECT", 50),
+
+		BaseURLFormat: env.GetString("PROJECT_BASE_URL_FORMAT", "https://{api_key}.api.mockingcode.com"),
 
 		AuthServiceURL: fmt.Sprintf("http://localhost:%s", env.GetString("AUTH_PORT", "8081")),
 	}

@@ -60,7 +60,7 @@ func (r *CollectionRepository) CreateCollection(collection *model.Collection) er
 	return nil
 }
 
-func (r *CollectionRepository) GetProjectCollection(projectID int64) ([]*model.Collection, error) {
+func (r *CollectionRepository) GetProjectCollections(projectID int64) ([]*model.Collection, error) {
 	query := `
 		SELECT id, project_id, name, description, fields, is_active, created_at, updated_at 
         FROM collections 

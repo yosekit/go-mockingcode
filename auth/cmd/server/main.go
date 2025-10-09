@@ -15,7 +15,7 @@ import (
 
 func main() {
 	// DEV
-	if err := godotenv.Load("../.env"); err != nil {
+	if err := godotenv.Load(".env"); err != nil {
 		log.Println("No .env file found, using system environment variables")
 	}
 
@@ -49,6 +49,7 @@ func main() {
 	mux.HandleFunc("/register", authHandler.Register)
 	mux.HandleFunc("/login", authHandler.Login)
 	mux.HandleFunc("/refresh", authHandler.Refresh)
+	mux.HandleFunc("/validate", authHandler.Validate)
 	mux.HandleFunc("/logout", authHandler.Logout)
 
 	port := os.Getenv("PORT")
