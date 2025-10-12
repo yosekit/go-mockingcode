@@ -23,6 +23,23 @@ definitions:
       updated_at:
         type: string
     type: object
+  model.CreateCollectionRequest:
+    properties:
+      description:
+        maxLength: 500
+        type: string
+      fields:
+        additionalProperties: {}
+        description: Структура полей
+        type: object
+      name:
+        maxLength: 50
+        minLength: 1
+        type: string
+    required:
+    - fields
+    - name
+    type: object
   model.CreateProjectRequest:
     properties:
       description:
@@ -55,6 +72,18 @@ definitions:
         type: string
       user_id:
         type: integer
+    type: object
+  model.UpdateProjectRequest:
+    properties:
+      description:
+        maxLength: 500
+        type: string
+      name:
+        maxLength: 100
+        minLength: 1
+        type: string
+    required:
+    - name
     type: object
 host: localhost:8082
 info:
@@ -128,6 +157,46 @@ paths:
       tags:
       - projects
   /projects/{id}:
+    delete:
+      description: Delete project and all its collections
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete project
+      tags:
+      - projects
     get:
       consumes:
       - application/json
@@ -168,11 +237,57 @@ paths:
       summary: Get project by ID
       tags:
       - projects
+    put:
+      consumes:
+      - application/json
+      description: Update project name and description
+      parameters:
+      - description: Project ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Project data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateProjectRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Project'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update project
+      tags:
+      - projects
   /projects/{id}/collections:
     get:
       consumes:
       - application/json
-      description: Get list of collections for a project or create a new collection
+      description: Get list of collections for a project
       parameters:
       - description: Project ID
         in: path
@@ -211,19 +326,25 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Get or create collections for a project
+      summary: Get collections for a project
       tags:
       - collections
     post:
       consumes:
       - application/json
-      description: Get list of collections for a project or create a new collection
+      description: Create a new collection
       parameters:
       - description: Project ID
         in: path
         name: id
         required: true
         type: integer
+      - description: Collection data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.CreateCollectionRequest'
       produces:
       - application/json
       responses:
@@ -256,7 +377,7 @@ paths:
             type: object
       security:
       - BearerAuth: []
-      summary: Get or create collections for a project
+      summary: Create collections for a project
       tags:
       - collections
 securityDefinitions:

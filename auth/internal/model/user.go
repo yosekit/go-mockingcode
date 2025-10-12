@@ -40,3 +40,8 @@ type RefreshToken struct {
 	ExpiresAt time.Time `json:"expires_at"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+// RefreshRequest represents user refresh token
+type RefreshRequest struct {
+	RefreshToken string `json:"refresh_token"`
+}

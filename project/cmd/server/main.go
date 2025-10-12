@@ -92,7 +92,7 @@ func main() {
 
 	// Handler Settings
 	mux.HandleFunc("/projects", projectHandler.HandlerProjects)
-	mux.HandleFunc("/projects/", projectHandler.HandleProjectByID)
+	mux.HandleFunc("/projects/{id}", projectHandler.HandleProjectByID)
 	mux.HandleFunc("/projects/{id}/collections", projectHandler.HandleProjectCollections)
 
 	port := cfg.ServerPort

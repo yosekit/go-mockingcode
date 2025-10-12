@@ -68,7 +68,7 @@ func (s *ProjectService) GetUserProjects(userID int64) ([]*model.Project, error)
 }
 
 // GetProject возвращает проект по ID (с проверкой владельца)
-func (s *ProjectService) GetProject(projectID, userID int64) (*model.Project, error) {
+func (s *ProjectService) GetProject(projectID int64, userID int64) (*model.Project, error) {
 	project, err := s.projectRepo.GetProjectByID(projectID, userID)
 	if err != nil {
 		return nil, err
@@ -79,9 +79,52 @@ func (s *ProjectService) GetProject(projectID, userID int64) (*model.Project, er
 	return project, nil
 }
 
+// UpdateProject обновляет проект
+func (s *ProjectService) UpdateProject(projectID int64, userID int64, req *model.UpdateProjectRequest) (*model.Project, error) {
+	// Получаем проект (проверяем владельца)
+	project, err := s.projectRepo.GetProjectByID(projectID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if project == nil {
+		return nil, errors.New("project not found")
+	}
+
+	// Обновляем поля
+	project.Name = req.Name
+	project.Description = req.Description
+	project.UpdatedAt = time.Now()
+
+	// Сохраняем в БД
+	if err := s.projectRepo.UpdateProject(project); err != nil {
+		return nil, err
+	}
+
+	return project, nil
+}
+
+// DeleteProject удаляет проект (каскадно удаляет коллекции)
+func (s *ProjectService) DeleteProject(projectID int64, userID int64) error {
+	// Проверяем что проект существует и принадлежит пользователю
+	project, err := s.projectRepo.GetProjectByID(projectID, userID)
+	if err != nil {
+		return err
+	}
+	if project == nil {
+		return errors.New("project not found")
+	}
+
+	if err := s.projectRepo.DeleteProject(projectID); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // GenerateAPIKey создает случайный API Key
 func (s *ProjectService) generateAPIKey() (string, error) {
-	bytes := make([]byte, 32) // 256 бит
+	// TODO more safety, avoid ambiguity, keep shorter
+	bytes := make([]byte, 8) // 64 бит
 	if _, err := rand.Read(bytes); err != nil {
 		return "", err
 	}
@@ -90,5 +133,5 @@ func (s *ProjectService) generateAPIKey() (string, error) {
 
 // GenerateBaseURL создает URL для проекта
 func (s *ProjectService) generateBaseURL(apiKey string) string {
-	return strings.Replace(s.baseURLFormat, "{api_key}", apiKey, -1)
+	return strings.ReplaceAll(s.baseURLFormat, "{api_key}", apiKey)
 }

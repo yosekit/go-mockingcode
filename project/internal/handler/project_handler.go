@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strconv"
 	"strings"
@@ -25,11 +26,16 @@ func NewProjectHandler(projectService *service.ProjectService, collectionService
 
 // HandlerProjects handles /projects endpoint for GET and POST methods
 func (h *ProjectHandler) HandlerProjects(w http.ResponseWriter, r *http.Request) {
+	userID, err := extractUserID(w, r)
+	if err != nil {
+		return
+	}
+
 	switch r.Method {
 	case http.MethodGet:
-		h.GetUserProjects(w, r)
+		h.GetUserProjects(w, r, userID)
 	case http.MethodPost:
-		h.CreateProject(w, r)
+		h.CreateProject(w, r, userID)
 	default:
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -46,20 +52,14 @@ func (h *ProjectHandler) HandlerProjects(w http.ResponseWriter, r *http.Request)
 // @Success 200 {object} map[string]interface{}
 // @Failure 401 {object} map[string]string
 // @Router /projects [get]
-func (h *ProjectHandler) GetUserProjects(w http.ResponseWriter, r *http.Request) {
-	userID, err := context.GetUserID(r.Context())
-	if err != nil {
-		writeErrorJson(w, http.StatusUnauthorized, "User not authenticated")
-		return
-	}
-
+func (h *ProjectHandler) GetUserProjects(w http.ResponseWriter, r *http.Request, userID int64) {
 	projects, err := h.projectService.GetUserProjects(userID)
 	if err != nil {
 		writeErrorJson(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	writeSuccessJson(w, http.StatusOK, map[string]interface{}{
+	writeSuccessJson(w, http.StatusOK, map[string]any{
 		"projects": projects,
 		"count":    len(projects),
 	})
@@ -77,13 +77,7 @@ func (h *ProjectHandler) GetUserProjects(w http.ResponseWriter, r *http.Request)
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Router /projects [post]
-func (h *ProjectHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
-	userID, err := context.GetUserID(r.Context())
-	if err != nil {
-		writeErrorJson(w, http.StatusUnauthorized, "User not authenticated")
-		return
-	}
-
+func (h *ProjectHandler) CreateProject(w http.ResponseWriter, r *http.Request, userID int64) {
 	var req model.CreateProjectRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeErrorJson(w, http.StatusBadRequest, "Invalid request body")
@@ -105,7 +99,31 @@ func (h *ProjectHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
 	writeSuccessJson(w, http.StatusCreated, project)
 }
 
-// HandleProjectByID godoc
+// HandleProjectByID handles /projects/{id} endpoint for GET, PUT and DELETE methods
+func (h *ProjectHandler) HandleProjectByID(w http.ResponseWriter, r *http.Request) {
+	userID, err := extractUserID(w, r)
+	if err != nil {
+		return
+	}
+
+	projectID, err := extractProjectID(w, r)
+	if err != nil {
+		return
+	}
+
+	switch r.Method {
+	case http.MethodGet:
+		h.GetProject(w, r, userID, projectID)
+	case http.MethodPut:
+		h.UpdateProject(w, r, userID, projectID)
+	case http.MethodDelete:
+		h.DeleteProject(w, r, userID, projectID)
+	default:
+		writeErrorJson(w, http.StatusMethodNotAllowed, "Method not allowed")
+	}
+}
+
+// GetProject godoc
 // @Summary Get project by ID
 // @Description Get specific project by ID
 // @Tags projects
@@ -118,40 +136,7 @@ func (h *ProjectHandler) CreateProject(w http.ResponseWriter, r *http.Request) {
 // @Failure 401 {object} map[string]string
 // @Failure 404 {object} map[string]string
 // @Router /projects/{id} [get]
-func (h *ProjectHandler) HandleProjectByID(w http.ResponseWriter, r *http.Request) {
-	userID, err := context.GetUserID(r.Context())
-	if err != nil {
-		writeErrorJson(w, http.StatusUnauthorized, "User not authenticated")
-		return
-	}
-
-	// Извлекаем ID из URL
-	pathParts := strings.Split(r.URL.Path, "/")
-	if len(pathParts) < 3 {
-		writeErrorJson(w, http.StatusBadRequest, "Invalid project ID")
-		return
-	}
-
-	projectID, err := strconv.ParseInt(pathParts[2], 10, 64)
-	if err != nil {
-		writeErrorJson(w, http.StatusBadRequest, "Invalid project ID")
-		return
-	}
-
-	switch r.Method {
-	case http.MethodGet:
-		h.getProject(w, r, userID, projectID)
-	// case http.MethodPut:
-	//     h.updateProject(w, r, userID, projectID)
-	// case http.MethodDelete:
-	//     h.deleteProject(w, r, userID, projectID)
-	default:
-		writeErrorJson(w, http.StatusMethodNotAllowed, "Method not allowed")
-	}
-}
-
-// getProject возвращает конкретный проект
-func (h *ProjectHandler) getProject(w http.ResponseWriter, r *http.Request, userID, projectID int64) {
+func (h *ProjectHandler) GetProject(w http.ResponseWriter, r *http.Request, userID int64, projectID int64) {
 	project, err := h.projectService.GetProject(projectID, userID)
 	if err != nil {
 		writeErrorJson(w, http.StatusNotFound, err.Error())
@@ -161,38 +146,66 @@ func (h *ProjectHandler) getProject(w http.ResponseWriter, r *http.Request, user
 	writeSuccessJson(w, http.StatusOK, project)
 }
 
-// HandleProjectCollections godoc
-// @Summary Get or create collections for a project
-// @Description Get list of collections for a project or create a new collection
-// @Tags collections
+// UpdateProject godoc
+// @Summary Update project
+// @Description Update project name and description
+// @Tags projects
 // @Accept json
 // @Produce json
 // @Security BearerAuth
 // @Param id path int true "Project ID"
-// @Success 200 {object} map[string]interface{}
-// @Success 201 {object} model.Collection
+// @Param request body model.UpdateProjectRequest true "Project data"
+// @Success 200 {object} model.Project
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
 // @Failure 404 {object} map[string]string
-// @Router /projects/{id}/collections [get]
-// @Router /projects/{id}/collections [post]
+// @Router /projects/{id} [put]
+func (h *ProjectHandler) UpdateProject(w http.ResponseWriter, r *http.Request, userID int64, projectID int64) {
+	var req model.UpdateProjectRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeErrorJson(w, http.StatusBadRequest, "Invalid request body")
+		return
+	}
+
+	project, err := h.projectService.UpdateProject(projectID, userID, &req)
+	if err != nil {
+		writeErrorJson(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	writeSuccessJson(w, http.StatusOK, project)
+}
+
+// DeleteProject godoc
+// @Summary Delete project
+// @Description Delete project and all its collections
+// @Tags projects
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Project ID"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /projects/{id} [delete]
+func (h *ProjectHandler) DeleteProject(w http.ResponseWriter, r *http.Request, userID int64, projectID int64) {
+	if err := h.projectService.DeleteProject(projectID, userID); err != nil {
+		writeErrorJson(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeSuccessJson(w, http.StatusOK, map[string]string{"message": "Project deleted successfully"})
+}
+
+// HandleProjectCollections handles /projects/{id}/collections endpoint for GET and POST methods
 func (h *ProjectHandler) HandleProjectCollections(w http.ResponseWriter, r *http.Request) {
-	userID, err := context.GetUserID(r.Context())
+	userID, err := extractUserID(w, r)
 	if err != nil {
-		writeErrorJson(w, http.StatusUnauthorized, "User not authenticated")
 		return
 	}
 
-	// Извлекаем ID из URL
-	pathParts := strings.Split(r.URL.Path, "/")
-	if len(pathParts) < 4 {
-		writeErrorJson(w, http.StatusBadRequest, "Invalid project ID")
-		return
-	}
-
-	projectID, err := strconv.ParseInt(pathParts[2], 10, 64)
+	projectID, err := extractProjectID(w, r)
 	if err != nil {
-		writeErrorJson(w, http.StatusBadRequest, "Invalid project ID")
 		return
 	}
 
@@ -209,28 +222,57 @@ func (h *ProjectHandler) HandleProjectCollections(w http.ResponseWriter, r *http
 
 	switch r.Method {
 	case http.MethodGet:
-		h.getProjectCollections(w, r, projectID, userID)
+		h.GetProjectCollections(w, r, projectID, userID)
 	case http.MethodPost:
-		h.createProjectCollection(w, r, projectID, userID)
+		h.CreateProjectCollection(w, r, projectID, userID)
 	default:
 		writeErrorJson(w, http.StatusMethodNotAllowed, "Method not allowed")
 	}
 }
 
-func (h *ProjectHandler) getProjectCollections(w http.ResponseWriter, r *http.Request, projectID int64, userID int64) {
+// GetProjectCollections godoc
+// @Summary Get collections for a project
+// @Description Get list of collections for a project
+// @Tags collections
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Project ID"
+// @Success 200 {object} map[string]interface{}
+// @Success 201 {object} model.Collection
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /projects/{id}/collections [get]
+func (h *ProjectHandler) GetProjectCollections(w http.ResponseWriter, r *http.Request, projectID int64, userID int64) {
 	collections, err := h.collectionService.GetProjectCollections(projectID, userID)
 	if err != nil {
 		writeErrorJson(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	writeSuccessJson(w, http.StatusOK, map[string]interface{}{
+	writeSuccessJson(w, http.StatusOK, map[string]any{
 		"collections": collections,
 		"count":       len(collections),
 	})
 }
 
-func (h *ProjectHandler) createProjectCollection(w http.ResponseWriter, r *http.Request, projectID int64, userID int64) {
+// CreateProjectCollection godoc
+// @Summary Create collections for a project
+// @Description Create a new collection
+// @Tags collections
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path int true "Project ID"
+// @Param request body model.CreateCollectionRequest true "Collection data"
+// @Success 200 {object} map[string]interface{}
+// @Success 201 {object} model.Collection
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /projects/{id}/collections [post]
+func (h *ProjectHandler) CreateProjectCollection(w http.ResponseWriter, r *http.Request, projectID int64, userID int64) {
 	var req model.CreateCollectionRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeErrorJson(w, http.StatusBadRequest, "Invalid request body")
@@ -254,6 +296,35 @@ func (h *ProjectHandler) createProjectCollection(w http.ResponseWriter, r *http.
 	}
 
 	writeSuccessJson(w, http.StatusCreated, collection)
+}
+
+func extractUserID(w http.ResponseWriter, r *http.Request) (int64, error) {
+	userID, err := context.GetUserID(r.Context())
+	if err != nil {
+		writeErrorJson(w, http.StatusUnauthorized, "User not authenticated")
+		return 0, err
+	}
+
+	return userID, nil
+}
+
+func extractProjectID(w http.ResponseWriter, r *http.Request) (int64, error) {
+	// Извлекаем ID из URL
+	pathParts := strings.Split(r.URL.Path, "/") // ["", "projects", "1"]
+
+	// Для путей: /projects/{id} и /projects/{id}/collections
+	if len(pathParts) < 3 {
+		writeErrorJson(w, http.StatusBadRequest, "Invalid project ID")
+		return 0, fmt.Errorf("invalid project ID")
+	}
+
+	projectID, err := strconv.ParseInt(pathParts[2], 10, 64)
+	if err != nil {
+		writeErrorJson(w, http.StatusBadRequest, "Invalid project ID")
+		return 0, err
+	}
+
+	return projectID, nil
 }
 
 // TODO refactor to common utils

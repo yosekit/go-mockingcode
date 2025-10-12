@@ -96,7 +96,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param request body map[string]string true "Refresh token"
+// @Param request body model.RefreshRequest true "Refresh token"
 // @Success 200 {object} model.AuthResponse
 // @Failure 400 {object} map[string]string
 // @Failure 401 {object} map[string]string
@@ -107,9 +107,7 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req struct {
-		RefreshToken string `json:"refresh_token"`
-	}
+	var req model.RefreshRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeErrorJson(w, http.StatusBadRequest, "Invalid request body")
 		return
@@ -171,7 +169,7 @@ func (h *AuthHandler) Validate(w http.ResponseWriter, r *http.Request) {
 // @Tags auth
 // @Accept json
 // @Produce json
-// @Param request body map[string]string true "Refresh token"
+// @Param request body model.RefreshRequest true "Refresh token"
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} map[string]string
 // @Router /logout [post]
@@ -181,9 +179,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req struct {
-		RefreshToken string `json:"refresh_token"`
-	}
+	var req model.RefreshRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeErrorJson(w, http.StatusBadRequest, "Invalid request body")
 		return

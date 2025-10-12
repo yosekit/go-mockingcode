@@ -24,6 +24,11 @@ definitions:
     - email
     - password
     type: object
+  model.RefreshRequest:
+    properties:
+      refresh_token:
+        type: string
+    type: object
   model.RegisterRequest:
     properties:
       email:
@@ -94,9 +99,7 @@ paths:
         name: request
         required: true
         schema:
-          additionalProperties:
-            type: string
-          type: object
+          $ref: '#/definitions/model.RefreshRequest'
       produces:
       - application/json
       responses:
@@ -126,9 +129,7 @@ paths:
         name: request
         required: true
         schema:
-          additionalProperties:
-            type: string
-          type: object
+          $ref: '#/definitions/model.RefreshRequest'
       produces:
       - application/json
       responses:

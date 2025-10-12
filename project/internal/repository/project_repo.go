@@ -151,3 +151,17 @@ func (r *ProjectRepository) GetProjectByAPIKey(apiKey string) (*model.Project, e
 
 	return project, nil
 }
+
+// UpdateProject обновляет проект
+func (r *ProjectRepository) UpdateProject(project *model.Project) error {
+	query := `UPDATE projects SET name = $1, description = $2, updated_at = $3 WHERE id = $4`
+	_, err := r.db.Exec(query, project.Name, project.Description, project.UpdatedAt, project.ID)
+	return err
+}
+
+// DeleteProject удаляет проект
+func (r *ProjectRepository) DeleteProject(projectID int64) error {
+	query := `DELETE FROM projects WHERE id = $1`
+	_, err := r.db.Exec(query, projectID)
+	return err
+}
