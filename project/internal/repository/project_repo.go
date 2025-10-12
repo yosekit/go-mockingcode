@@ -22,7 +22,7 @@ func (r *ProjectRepository) InitSchema() error {
             user_id INTEGER NOT NULL,
             name VARCHAR(100) NOT NULL,
             description TEXT,
-            api_key VARCHAR(64) UNIQUE NOT NULL,
+            api_key VARCHAR(16) UNIQUE NOT NULL,
             base_url VARCHAR(255),
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

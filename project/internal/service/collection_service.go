@@ -1,7 +1,6 @@
 package service
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
@@ -44,21 +43,21 @@ func (s *CollectionService) CreateCollection(projectID int64, userID int64, req 
 		return nil, fmt.Errorf("maximum collections limit reached: %d", s.maxCollectionsPerProject)
 	}
 
-	// Конвертируем fields в JSON
-	fieldsJSON, err := json.Marshal(req.Fields)
-	if err != nil {
-		return nil, fmt.Errorf("invalid fields format: %v", err)
-	}
-
-	// Создаем коллекцию
+	// Создаем коллекцию с дефолтными значениями
 	collection := &model.Collection{
 		ProjectID:   projectID,
 		Name:        req.Name,
 		Description: req.Description,
-		Fields:      string(fieldsJSON),
+		Fields:      req.Fields, // Может быть пустым
+		Config:      req.Config, // Может быть пустым
 		IsActive:    true,
 		CreatedAt:   time.Now(),
 		UpdatedAt:   time.Now(),
+	}
+
+	// Устанавливаем дефолтный config если не указан
+	if collection.Config.Count == 0 {
+		collection.Config.Count = 10
 	}
 
 	if err := s.collectionRepo.CreateCollection(collection); err != nil {
@@ -69,7 +68,7 @@ func (s *CollectionService) CreateCollection(projectID int64, userID int64, req 
 }
 
 // GetProjectCollections возвращает все коллекции проекта
-func (s *CollectionService) GetProjectCollections(projectID, userID int64) ([]*model.Collection, error) {
+func (s *CollectionService) GetProjectCollections(projectID int64, userID int64) ([]*model.Collection, error) {
 	// Проверяем что проект принадлежит пользователю
 	project, err := s.projectRepo.GetProjectByID(projectID, userID)
 	if err != nil {
@@ -80,4 +79,64 @@ func (s *CollectionService) GetProjectCollections(projectID, userID int64) ([]*m
 	}
 
 	return s.collectionRepo.GetProjectCollections(projectID)
+}
+
+// GetCollection возвращает коллекцию по ID
+func (s *CollectionService) GetCollection(collectionID int64, projectID int64, userID int64) (*model.Collection, error) {
+	// Проверяем что проект принадлежит пользователю
+	project, err := s.projectRepo.GetProjectByID(projectID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if project == nil {
+		return nil, errors.New("project not found")
+	}
+
+	return s.collectionRepo.GetCollectionByID(collectionID, projectID)
+}
+
+// UpdateCollection обновляет коллекцию
+func (s *CollectionService) UpdateCollection(collectionID int64, projectID int64, userID int64, req *model.UpdateCollectionRequest) (*model.Collection, error) {
+	// Проверяем что проект принадлежит пользователю
+	project, err := s.projectRepo.GetProjectByID(projectID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if project == nil {
+		return nil, errors.New("project not found")
+	}
+
+	// Получаем текущую коллекцию
+	collection, err := s.collectionRepo.GetCollectionByID(collectionID, projectID)
+	if err != nil {
+		return nil, err
+	}
+	if collection == nil {
+		return nil, errors.New("collection not found")
+	}
+
+	// Обновляем только переданные поля
+	if req.Name != "" {
+		collection.Name = req.Name
+	}
+	if req.Description != "" {
+		collection.Description = req.Description
+	}
+	if req.Fields != nil {
+		collection.Fields = req.Fields
+	}
+	if req.Config != nil {
+		collection.Config = *req.Config
+	}
+	if req.IsActive != nil {
+		collection.IsActive = *req.IsActive
+	}
+
+	collection.UpdatedAt = time.Now()
+
+	if err := s.collectionRepo.UpdateCollection(collection); err != nil {
+		return nil, err
+	}
+
+	return collection, nil
 }

@@ -74,7 +74,8 @@ func main() {
 	)
 
 	// Init Handlers
-	projectHandler := handler.NewProjectHandler(projectService, collectionService)
+	projectHandler := handler.NewProjectHandler(projectService)
+	collectionHandler := handler.NewCollectionHandler(projectService, collectionService)
 
 	// Init Auth Client
 	authClient := auth.NewAuthClient(cfg.AuthServiceURL)
@@ -93,7 +94,8 @@ func main() {
 	// Handler Settings
 	mux.HandleFunc("/projects", projectHandler.HandlerProjects)
 	mux.HandleFunc("/projects/{id}", projectHandler.HandleProjectByID)
-	mux.HandleFunc("/projects/{id}/collections", projectHandler.HandleProjectCollections)
+	mux.HandleFunc("/projects/{id}/collections", collectionHandler.HandleProjectCollections)
+	mux.HandleFunc("/projects/{id}/collections/{collectionId}", collectionHandler.HandleProjectCollectionByID)
 
 	port := cfg.ServerPort
 	log.Printf("Project service starting on port %s", port)

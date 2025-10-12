@@ -453,62 +453,315 @@
                     }
                 }
             }
+        },
+        "/projects/{projectId}/collections/{collectionId}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Get specific collection by ID",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "collections"
+                ],
+                "summary": "Get collection by ID",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Project ID",
+                        "name": "projectId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Collection ID",
+                        "name": "collectionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Collection"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Update collection name, description, fields or config",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "collections"
+                ],
+                "summary": "Update collection",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Project ID",
+                        "name": "projectId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Collection ID",
+                        "name": "collectionId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Collection data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/model.UpdateCollectionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/model.Collection"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Delete collection",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "collections"
+                ],
+                "summary": "Delete collection",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Project ID",
+                        "name": "projectId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Collection ID",
+                        "name": "collectionId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
         "model.Collection": {
             "type": "object",
             "properties": {
+                "config": {
+                    "description": "Настройки генерации",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.CollectionConfig"
+                        }
+                    ]
+                },
                 "created_at": {
                     "type": "string"
                 },
                 "description": {
-                    "description": "Описание коллекции",
-                    "type": "string"
+                    "type": "string",
+                    "example": "User data collection"
                 },
                 "fields": {
-                    "description": "JSON с описанием полей коллекции",
-                    "type": "string"
+                    "description": "Шаблоны полей для генерации",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.FieldTemplate"
+                    }
                 },
                 "id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1
                 },
                 "is_active": {
-                    "description": "Активна ли коллекция",
-                    "type": "boolean"
+                    "type": "boolean",
+                    "example": true
                 },
                 "name": {
-                    "description": "Название коллекции (например, \"users\")",
-                    "type": "string"
+                    "type": "string",
+                    "example": "users"
                 },
                 "project_id": {
-                    "type": "integer"
+                    "type": "integer",
+                    "example": 1
                 },
                 "updated_at": {
                     "type": "string"
                 }
             }
         },
+        "model.CollectionConfig": {
+            "type": "object",
+            "properties": {
+                "count": {
+                    "description": "Количество генерируемых записей",
+                    "type": "integer",
+                    "example": 10
+                },
+                "seed": {
+                    "description": "Seed для воспроизводимости",
+                    "type": "integer"
+                }
+            }
+        },
         "model.CreateCollectionRequest": {
             "type": "object",
             "required": [
-                "fields",
                 "name"
             ],
             "properties": {
+                "config": {
+                    "description": "Опционально при создании",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.CollectionConfig"
+                        }
+                    ]
+                },
                 "description": {
                     "type": "string",
-                    "maxLength": 500
+                    "maxLength": 500,
+                    "example": "User data"
                 },
                 "fields": {
-                    "description": "Структура полей",
-                    "type": "object",
-                    "additionalProperties": {}
+                    "description": "Опционально при создании",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.FieldTemplate"
+                    }
                 },
                 "name": {
                     "type": "string",
                     "maxLength": 50,
-                    "minLength": 1
+                    "minLength": 1,
+                    "example": "users"
                 }
             }
         },
@@ -526,6 +779,58 @@
                     "type": "string",
                     "maxLength": 100,
                     "minLength": 1
+                }
+            }
+        },
+        "model.FieldTemplate": {
+            "type": "object",
+            "properties": {
+                "format": {
+                    "type": "string",
+                    "example": "email"
+                },
+                "max": {
+                    "description": "для numbers",
+                    "type": "number",
+                    "example": 100
+                },
+                "min": {
+                    "description": "для numbers",
+                    "type": "number",
+                    "example": 0
+                },
+                "name": {
+                    "type": "string",
+                    "example": "email"
+                },
+                "options": {
+                    "description": "для enum",
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "example": [
+                        "active",
+                        "inactive"
+                    ]
+                },
+                "required": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "string",
+                        "number",
+                        "boolean",
+                        "date"
+                    ],
+                    "example": "string"
+                },
+                "unique": {
+                    "type": "boolean",
+                    "example": false
                 }
             }
         },
@@ -557,6 +862,40 @@
                 },
                 "user_id": {
                     "type": "integer"
+                }
+            }
+        },
+        "model.UpdateCollectionRequest": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "description": "Можно обновить конфиг",
+                    "allOf": [
+                        {
+                            "$ref": "#/definitions/model.CollectionConfig"
+                        }
+                    ]
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "Updated user data"
+                },
+                "fields": {
+                    "description": "Можно обновить поля",
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/model.FieldTemplate"
+                    }
+                },
+                "is_active": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "example": "updated-users"
                 }
             }
         },

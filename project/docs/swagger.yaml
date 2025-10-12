@@ -2,42 +2,66 @@ basePath: /
 definitions:
   model.Collection:
     properties:
+      config:
+        allOf:
+        - $ref: '#/definitions/model.CollectionConfig'
+        description: Настройки генерации
       created_at:
         type: string
       description:
-        description: Описание коллекции
+        example: User data collection
         type: string
       fields:
-        description: JSON с описанием полей коллекции
-        type: string
+        description: Шаблоны полей для генерации
+        items:
+          $ref: '#/definitions/model.FieldTemplate'
+        type: array
       id:
+        example: 1
         type: integer
       is_active:
-        description: Активна ли коллекция
+        example: true
         type: boolean
       name:
-        description: Название коллекции (например, "users")
+        example: users
         type: string
       project_id:
+        example: 1
         type: integer
       updated_at:
         type: string
     type: object
+  model.CollectionConfig:
+    properties:
+      count:
+        description: Количество генерируемых записей
+        example: 10
+        type: integer
+      seed:
+        description: Seed для воспроизводимости
+        type: integer
+    type: object
   model.CreateCollectionRequest:
     properties:
+      config:
+        allOf:
+        - $ref: '#/definitions/model.CollectionConfig'
+        description: Опционально при создании
       description:
+        example: User data
         maxLength: 500
         type: string
       fields:
-        additionalProperties: {}
-        description: Структура полей
-        type: object
+        description: Опционально при создании
+        items:
+          $ref: '#/definitions/model.FieldTemplate'
+        type: array
       name:
+        example: users
         maxLength: 50
         minLength: 1
         type: string
     required:
-    - fields
     - name
     type: object
   model.CreateProjectRequest:
@@ -51,6 +75,45 @@ definitions:
         type: string
     required:
     - name
+    type: object
+  model.FieldTemplate:
+    properties:
+      format:
+        example: email
+        type: string
+      max:
+        description: для numbers
+        example: 100
+        type: number
+      min:
+        description: для numbers
+        example: 0
+        type: number
+      name:
+        example: email
+        type: string
+      options:
+        description: для enum
+        example:
+        - active
+        - inactive
+        items:
+          type: string
+        type: array
+      required:
+        example: true
+        type: boolean
+      type:
+        enum:
+        - string
+        - number
+        - boolean
+        - date
+        example: string
+        type: string
+      unique:
+        example: false
+        type: boolean
     type: object
   model.Project:
     properties:
@@ -72,6 +135,29 @@ definitions:
         type: string
       user_id:
         type: integer
+    type: object
+  model.UpdateCollectionRequest:
+    properties:
+      config:
+        allOf:
+        - $ref: '#/definitions/model.CollectionConfig'
+        description: Можно обновить конфиг
+      description:
+        example: Updated user data
+        maxLength: 500
+        type: string
+      fields:
+        description: Можно обновить поля
+        items:
+          $ref: '#/definitions/model.FieldTemplate'
+        type: array
+      is_active:
+        example: true
+        type: boolean
+      name:
+        example: updated-users
+        maxLength: 50
+        type: string
     type: object
   model.UpdateProjectRequest:
     properties:
@@ -378,6 +464,146 @@ paths:
       security:
       - BearerAuth: []
       summary: Create collections for a project
+      tags:
+      - collections
+  /projects/{projectId}/collections/{collectionId}:
+    delete:
+      description: Delete collection
+      parameters:
+      - description: Project ID
+        in: path
+        name: projectId
+        required: true
+        type: integer
+      - description: Collection ID
+        in: path
+        name: collectionId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete collection
+      tags:
+      - collections
+    get:
+      description: Get specific collection by ID
+      parameters:
+      - description: Project ID
+        in: path
+        name: projectId
+        required: true
+        type: integer
+      - description: Collection ID
+        in: path
+        name: collectionId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Collection'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get collection by ID
+      tags:
+      - collections
+    put:
+      consumes:
+      - application/json
+      description: Update collection name, description, fields or config
+      parameters:
+      - description: Project ID
+        in: path
+        name: projectId
+        required: true
+        type: integer
+      - description: Collection ID
+        in: path
+        name: collectionId
+        required: true
+        type: integer
+      - description: Collection data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/model.UpdateCollectionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.Collection'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update collection
       tags:
       - collections
 securityDefinitions:
