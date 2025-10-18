@@ -185,6 +185,38 @@ info:
   title: MockingCode Project Service API
   version: "1.0"
 paths:
+  /api-keys/{apiKey}/validate:
+    get:
+      description: Validate API Key and return project information
+      parameters:
+      - description: API Key
+        in: path
+        name: apiKey
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Validate API Key
+      tags:
+      - api-keys
   /projects:
     get:
       description: Get list of all projects for authenticated user

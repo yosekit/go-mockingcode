@@ -52,7 +52,7 @@ func main() {
 	}
 	defer db.Close()
 
-	// Init DB schemas
+	// Init Repositories
 	projectRepo := repository.NewProjectRepository(db)
 	if err := projectRepo.InitSchema(); err != nil {
 		log.Fatal("Failed to init projects schema:", err)
@@ -76,6 +76,7 @@ func main() {
 	// Init Handlers
 	projectHandler := handler.NewProjectHandler(projectService)
 	collectionHandler := handler.NewCollectionHandler(projectService, collectionService)
+	apiKeyHandler := handler.NewAPIKeyHandler(projectService)
 
 	// Init Auth Client
 	authClient := auth.NewAuthClient(cfg.AuthServiceURL)
@@ -83,19 +84,20 @@ func main() {
 	// Route Settings
 	mux := http.NewServeMux()
 
-	// Health Check
+	// Public Handlers
 	mux.HandleFunc("/health", healthHandler)
-	// Swagger
 	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 
-	// Middleware Settings
-	handlerWithAuth := middleware.AuthMiddleware(authClient)(mux)
-
-	// Handler Settings
-	mux.HandleFunc("/projects", projectHandler.HandlerProjects)
+	// Application Handlers
+	mux.HandleFunc("/projects", projectHandler.HandleProjects)
 	mux.HandleFunc("/projects/{id}", projectHandler.HandleProjectByID)
 	mux.HandleFunc("/projects/{id}/collections", collectionHandler.HandleProjectCollections)
 	mux.HandleFunc("/projects/{id}/collections/{collectionId}", collectionHandler.HandleProjectCollectionByID)
+
+	mux.HandleFunc("/api-keys/", apiKeyHandler.ValidateAPIKey)
+
+	// Middleware Settings
+	handlerWithAuth := middleware.AuthMiddleware(authClient)(mux)
 
 	port := cfg.ServerPort
 	log.Printf("Project service starting on port %s", port)

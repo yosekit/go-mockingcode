@@ -22,8 +22,8 @@ func NewProjectHandler(projectService *service.ProjectService) *ProjectHandler {
 	}
 }
 
-// HandlerProjects handles /projects endpoint for GET and POST methods
-func (h *ProjectHandler) HandlerProjects(w http.ResponseWriter, r *http.Request) {
+// HandleProjects handles /projects endpoint for GET and POST methods
+func (h *ProjectHandler) HandleProjects(w http.ResponseWriter, r *http.Request) {
 	userID, err := extractUserID(w, r)
 	if err != nil {
 		return

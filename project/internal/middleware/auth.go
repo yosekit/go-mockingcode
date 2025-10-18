@@ -54,6 +54,7 @@ func AuthMiddleware(authClient *auth.AuthClient) func(http.Handler) http.Handler
 	}
 }
 
+// TODO refactor fot common utils
 func writeErrorJson(w http.ResponseWriter, statusCode int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)

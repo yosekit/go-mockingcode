@@ -1,0 +1,308 @@
+basePath: /
+definitions:
+  model.DocumentResponse:
+    properties:
+      document:
+        $ref: '#/definitions/model.MockDocument'
+    type: object
+  model.DocumentsResponse:
+    properties:
+      documents:
+        items:
+          $ref: '#/definitions/model.MockDocument'
+        type: array
+      limit:
+        type: integer
+      offset:
+        type: integer
+      total:
+        type: integer
+    type: object
+  model.MockDocument:
+    properties:
+      collection_name:
+        type: string
+      created_at:
+        type: string
+      data:
+        additionalProperties: {}
+        description: Динамические данные
+        type: object
+      id:
+        type: string
+      project_id:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+host: localhost:8083
+info:
+  contact:
+    email: support@mockingcode.dev
+    name: API Support
+    url: http://mockingcode.dev/support
+  description: Data service for MockingCode platform
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://mockingcode.dev/terms/
+  title: MockingCode Data Service API
+  version: "1.0"
+paths:
+  /{api_key}/{collection}:
+    get:
+      description: Get all documents from a collection with pagination
+      parameters:
+      - description: API Key
+        in: path
+        name: api_key
+        required: true
+        type: string
+      - description: Collection Name
+        in: path
+        name: collection
+        required: true
+        type: string
+      - default: 10
+        description: Limit
+        in: query
+        name: limit
+        type: integer
+      - default: 0
+        description: Offset
+        in: query
+        name: offset
+        type: integer
+      - default: created_at
+        description: Sort field
+        in: query
+        name: sort
+        type: string
+      - default: desc
+        description: Sort order
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.DocumentsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get collection documents
+      tags:
+      - documents
+    post:
+      consumes:
+      - application/json
+      description: Create new document in collection
+      parameters:
+      - description: API Key
+        in: path
+        name: api_key
+        required: true
+        type: string
+      - description: Collection Name
+        in: path
+        name: collection
+        required: true
+        type: string
+      - description: Document data
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/model.DocumentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create document
+      tags:
+      - documents
+  /{api_key}/{collection}/{id}:
+    delete:
+      description: Delete document from collection
+      parameters:
+      - description: API Key
+        in: path
+        name: api_key
+        required: true
+        type: string
+      - description: Collection Name
+        in: path
+        name: collection
+        required: true
+        type: string
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Delete document
+      tags:
+      - documents
+    get:
+      description: Get specific document by ID
+      parameters:
+      - description: API Key
+        in: path
+        name: api_key
+        required: true
+        type: string
+      - description: Collection Name
+        in: path
+        name: collection
+        required: true
+        type: string
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.DocumentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get document by ID
+      tags:
+      - documents
+    put:
+      consumes:
+      - application/json
+      description: Update existing document
+      parameters:
+      - description: API Key
+        in: path
+        name: api_key
+        required: true
+        type: string
+      - description: Collection Name
+        in: path
+        name: collection
+        required: true
+        type: string
+      - description: Document ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Document data
+        in: body
+        name: request
+        required: true
+        schema:
+          additionalProperties: true
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/model.DocumentResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Update document
+      tags:
+      - documents
+swagger: "2.0"

@@ -79,6 +79,11 @@ func (s *ProjectService) GetProject(projectID int64, userID int64) (*model.Proje
 	return project, nil
 }
 
+// GetProjectByAPIKey возвращает проект по API Key
+func (s *ProjectService) GetProjectByAPIKey(apiKey string) (*model.Project, error) {
+	return s.projectRepo.GetProjectByAPIKey(apiKey)
+}
+
 // UpdateProject обновляет проект
 func (s *ProjectService) UpdateProject(projectID int64, userID int64, req *model.UpdateProjectRequest) (*model.Project, error) {
 	// Получаем проект (проверяем владельца)
