@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -12,7 +12,10 @@ import (
 func CORSMiddleware(cfg *config.Config) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Printf("[CORSMiddleware] Request: %s %s", r.Method, r.URL.Path)
+			slog.Debug("cors middleware",
+				slog.String("method", r.Method),
+				slog.String("path", r.URL.Path),
+			)
 			
 			// Set CORS headers
 			origin := r.Header.Get("Origin")

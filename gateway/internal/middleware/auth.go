@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -17,16 +17,19 @@ const UserIDKey contextKey = "user_id"
 func AuthMiddleware(authClient *client.AuthClient) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			log.Printf("[AuthMiddleware] Request: %s %s", r.Method, r.URL.Path)
+			slog.Debug("auth middleware",
+				slog.String("method", r.Method),
+				slog.String("path", r.URL.Path),
+			)
 			
 			// Skip auth for public endpoints
 			if isPublicEndpoint(r.URL.Path) {
-				log.Printf("[AuthMiddleware] Public endpoint, skipping auth")
+				slog.Debug("public endpoint, skipping auth", slog.String("path", r.URL.Path))
 				next.ServeHTTP(w, r)
 				return
 			}
 			
-			log.Printf("[AuthMiddleware] Protected endpoint, checking auth")
+			slog.Debug("protected endpoint, checking auth")
 
 			// Extract token from Authorization header
 			authHeader := r.Header.Get("Authorization")
@@ -47,21 +50,24 @@ func AuthMiddleware(authClient *client.AuthClient) func(http.Handler) http.Handl
 			// Validate token with auth service
 			validateResp, err := authClient.ValidateToken(token)
 			if err != nil {
-				log.Printf("[AuthMiddleware] Error validating token: %v\n", err)
+				slog.Error("token validation failed", slog.String("error", err.Error()))
 				writeError(w, http.StatusUnauthorized, "Failed to validate token")
 				return
 			}
 
-			log.Printf("[AuthMiddleware] ValidateResp: Valid=%v, UserID=%s\n", validateResp.Valid, validateResp.UserID)
+			slog.Debug("token validated",
+				slog.Bool("valid", validateResp.Valid),
+				slog.String("user_id", validateResp.UserID),
+			)
 
 			if !validateResp.Valid {
-				log.Printf("[AuthMiddleware] Token is not valid, blocking request\n")
+				slog.Warn("invalid token, blocking request")
 				writeError(w, http.StatusUnauthorized, "Invalid token")
 				return
 			}
 
 			// Add user ID to request header for downstream services
-			log.Printf("[AuthMiddleware] Token valid, adding X-User-ID header: %s", validateResp.UserID)
+			slog.Debug("adding X-User-ID header", slog.String("user_id", validateResp.UserID))
 			r.Header.Set("X-User-ID", validateResp.UserID)
 			
 			// Also add to context for potential use in gateway handlers
@@ -78,6 +84,7 @@ func isPublicEndpoint(path string) bool {
 		"/auth/refresh",
 		"/health",
 		"/swagger",
+		"/admin/",  // Admin endpoints are public (TODO: add admin auth)
 	}
 
 	for _, publicPath := range publicPaths {

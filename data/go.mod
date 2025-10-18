@@ -4,6 +4,7 @@ go 1.24.0
 
 require (
 	github.com/brianvoe/gofakeit/v7 v7.8.0
+	github.com/go-mockingcode/logger v0.0.0
 	github.com/go-mockingcode/models v0.0.0
 	github.com/joho/godotenv v1.5.1
 	github.com/swaggo/http-swagger v1.3.4
@@ -33,5 +34,7 @@ require (
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
+
+replace github.com/go-mockingcode/logger => ../pkg/logger
 
 replace github.com/go-mockingcode/models => ../pkg/models

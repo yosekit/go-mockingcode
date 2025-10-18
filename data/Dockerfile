@@ -3,8 +3,9 @@ FROM golang:1.24-alpine AS builder
 
 WORKDIR /build
 
-# Copy shared models to match replace directive
+# Copy shared modules to match replace directive
 COPY pkg/models/ ./pkg/models/
+COPY pkg/logger/ ./pkg/logger/
 
 # Copy data service
 COPY data/ ./data/

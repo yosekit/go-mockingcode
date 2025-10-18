@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/go-mockingcode/gateway/internal/config"
 	"github.com/go-mockingcode/gateway/internal/handler"
 	"github.com/go-mockingcode/gateway/internal/middleware"
+	applogger "github.com/go-mockingcode/logger"
 	"github.com/joho/godotenv"
 )
 
@@ -40,6 +42,10 @@ func main() {
 	// Load configuration
 	cfg := config.Load()
 
+	// Initialize logger
+	logger := applogger.FromEnv()
+	slog.SetDefault(logger)
+
 	// Initialize service clients
 	authClient := client.NewAuthClient(cfg.AuthServiceURL)
 	projectClient := client.NewProjectClient(cfg.ProjectServiceURL)
@@ -48,12 +54,24 @@ func main() {
 	// Initialize handlers
 	authHandler := handler.NewAuthHandler(authClient)
 	proxyHandler := handler.NewProxyHandler(projectClient, dataClient)
+	adminHandler := handler.NewAdminHandler()
 
 	// Setup routing
 	mux := http.NewServeMux()
 
 	// Health check
 	mux.HandleFunc("/health", healthHandler)
+
+	// Admin routes (public for now - TODO: add admin auth)
+	mux.HandleFunc("/admin/log-level", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			adminHandler.GetLogLevel(w, r)
+		} else if r.Method == http.MethodPut {
+			adminHandler.SetLogLevel(w, r)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	})
 
 	// Auth routes (public)
 	mux.HandleFunc("/auth/register", authHandler.Register)
@@ -62,12 +80,11 @@ func main() {
 
 	// API routes (protected) - proxy to project service
 	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("[Router] /api/ handler called, path: %s", r.URL.Path)
+		slog.Debug("api route handler", slog.String("path", r.URL.Path))
 		if strings.HasPrefix(r.URL.Path, "/api/projects") {
-			log.Printf("[Router] Routing to HandleProjects")
 			proxyHandler.HandleProjects(w, r)
 		} else {
-			log.Printf("[Router] No match for path %s, returning 404", r.URL.Path)
+			slog.Warn("no route match", slog.String("path", r.URL.Path))
 			http.NotFound(w, r)
 		}
 	})
@@ -80,10 +97,12 @@ func main() {
 	handler = middleware.AuthMiddleware(authClient)(handler)
 
 	// Start server
-	log.Printf("🚀 API Gateway starting on port %s", cfg.ServerPort)
-	log.Printf("📡 Auth Service: %s", cfg.AuthServiceURL)
-	log.Printf("📡 Project Service: %s", cfg.ProjectServiceURL)
-	log.Printf("📡 Data Service: %s", cfg.DataServiceURL)
+	logger.Info("API Gateway starting",
+		slog.String("port", cfg.ServerPort),
+		slog.String("auth_service", cfg.AuthServiceURL),
+		slog.String("project_service", cfg.ProjectServiceURL),
+		slog.String("data_service", cfg.DataServiceURL),
+	)
 	
 	if err := http.ListenAndServe(":"+cfg.ServerPort, handler); err != nil {
 		log.Fatal("Failed to start gateway:", err)

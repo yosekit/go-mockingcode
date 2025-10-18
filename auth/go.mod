@@ -3,11 +3,14 @@ module github.com/go-mockingcode/auth
 go 1.24.0
 
 require (
+	github.com/go-mockingcode/logger v0.0.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	golang.org/x/crypto v0.43.0
 )
+
+replace github.com/go-mockingcode/logger => ../pkg/logger
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect

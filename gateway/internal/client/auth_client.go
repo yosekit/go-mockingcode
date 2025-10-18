@@ -89,22 +89,17 @@ func (c *AuthClient) Login(email, password string) (*AuthResponse, error) {
 func (c *AuthClient) ValidateToken(token string) (*ValidateResponse, error) {
 	req, err := http.NewRequest("GET", c.baseURL+"/validate", nil)
 	if err != nil {
-		fmt.Printf("[AuthClient] Error creating request: %v\n", err)
 		return nil, err
 	}
 	req.Header.Set("Authorization", "Bearer "+token)
 
 	resp, err := c.client.Do(req)
 	if err != nil {
-		fmt.Printf("[AuthClient] Error executing request: %v\n", err)
 		return nil, err
 	}
 	defer resp.Body.Close()
 
-	fmt.Printf("[AuthClient] Response status: %d\n", resp.StatusCode)
-
 	if resp.StatusCode != http.StatusOK {
-		fmt.Printf("[AuthClient] Non-200 status, returning Valid=false\n")
 		return &ValidateResponse{Valid: false}, nil
 	}
 
@@ -116,11 +111,8 @@ func (c *AuthClient) ValidateToken(token string) (*ValidateResponse, error) {
 	}
 	
 	if err := json.NewDecoder(resp.Body).Decode(&authResponse); err != nil {
-		fmt.Printf("[AuthClient] Error decoding response: %v\n", err)
 		return nil, err
 	}
-
-	fmt.Printf("[AuthClient] Decoded response: %+v\n", authResponse)
 
 	// Convert user_id to string
 	var userID string
@@ -132,8 +124,6 @@ func (c *AuthClient) ValidateToken(token string) (*ValidateResponse, error) {
 	default:
 		userID = fmt.Sprintf("%v", v)
 	}
-
-	fmt.Printf("[AuthClient] Converted userID: %s, Valid: true\n", userID)
 
 	// Convert to ValidateResponse format
 	return &ValidateResponse{

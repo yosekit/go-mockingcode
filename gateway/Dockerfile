@@ -1,12 +1,16 @@
 # Build stage
 FROM golang:1.24-alpine AS builder
 
-WORKDIR /app
+WORKDIR /build
+
+# Copy shared modules
+COPY pkg/logger/ ./pkg/logger/
 
 # Copy gateway service
-COPY gateway/ ./
+COPY gateway/ ./gateway/
 
-# Download deps and build
+# Set working dir and build
+WORKDIR /build/gateway
 RUN go mod download && \
     CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o gateway ./cmd/server
 
@@ -18,7 +22,7 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 # Copy binary from builder
-COPY --from=builder /app/gateway .
+COPY --from=builder /build/gateway/gateway .
 
 EXPOSE 8080
 

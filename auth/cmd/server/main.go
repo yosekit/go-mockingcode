@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/go-mockingcode/auth/internal/handler"
 	"github.com/go-mockingcode/auth/internal/repository"
 	"github.com/go-mockingcode/auth/internal/service"
+	applogger "github.com/go-mockingcode/logger"
 	"github.com/joho/godotenv"
 
 	_ "github.com/go-mockingcode/auth/docs"
@@ -42,6 +44,10 @@ func main() {
 
 	// Load Configuration
 	cfg := config.Load()
+
+	// Initialize logger
+	logger := applogger.FromEnv()
+	slog.SetDefault(logger)
 
 	// Connect to DB
 	db, err := database.NewPostgresDB(cfg)
@@ -84,7 +90,7 @@ func main() {
 		port = "8081"
 	}
 
-	log.Printf("Auth service starting on port %s", port)
+	logger.Info("Auth service starting", slog.String("port", port))
 	log.Fatal(http.ListenAndServe(":"+port, mux))
 }
 

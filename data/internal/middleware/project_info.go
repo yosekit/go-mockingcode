@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 )
 
@@ -25,7 +25,7 @@ func ProjectInfoMiddleware() func(http.Handler) http.Handler {
 			userID := r.Header.Get("X-User-ID")
 			
 			if userID != "" {
-				log.Printf("[ProjectInfoMiddleware] Request from Gateway, user ID: %s", userID)
+				slog.Debug("request from gateway", slog.String("user_id", userID))
 				// In future, we might need to extract project ID from path/body
 				// For now, just pass through - document handlers will handle project validation
 				next.ServeHTTP(w, r)
@@ -33,7 +33,7 @@ func ProjectInfoMiddleware() func(http.Handler) http.Handler {
 			}
 
 			// No user ID - this shouldn't happen if accessing through Gateway
-			log.Printf("[ProjectInfoMiddleware] No X-User-ID header, request might be direct access")
+			slog.Warn("no X-User-ID header, might be direct access", slog.String("path", r.URL.Path))
 			// TODO: Add API key validation for direct access
 			next.ServeHTTP(w, r)
 		})

@@ -3,12 +3,15 @@ module github.com/go-mockingcode/project
 go 1.24.0
 
 require (
+	github.com/go-mockingcode/logger v0.0.0
 	github.com/go-mockingcode/models v0.0.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.6
 )
+
+replace github.com/go-mockingcode/logger => ../pkg/logger
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect

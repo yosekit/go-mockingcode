@@ -1,7 +1,7 @@
 package handler
 
 import (
-	"log"
+	"log/slog"
 	"net/http"
 	"strings"
 
@@ -22,11 +22,13 @@ func NewProxyHandler(projectClient *client.ProjectClient, dataClient *client.Dat
 
 // HandleProjects proxies requests to project service
 func (h *ProxyHandler) HandleProjects(w http.ResponseWriter, r *http.Request) {
-	log.Printf("[ProxyHandler] HandleProjects called for: %s", r.URL.Path)
-	
 	// Extract path after /api
 	path := strings.TrimPrefix(r.URL.Path, "/api")
-	log.Printf("[ProxyHandler] Proxying to project service, path: %s", path)
+	
+	slog.Debug("proxying to project service",
+		slog.String("original_path", r.URL.Path),
+		slog.String("proxy_path", path),
+	)
 	
 	// Add query parameters
 	if r.URL.RawQuery != "" {
@@ -35,16 +37,16 @@ func (h *ProxyHandler) HandleProjects(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.projectClient.ProxyRequest(r, path)
 	if err != nil {
-		log.Printf("[ProxyHandler] Error proxying to project service: %v", err)
+		slog.Error("failed to proxy to project service", slog.String("error", err.Error()))
 		writeError(w, http.StatusBadGateway, "Failed to reach project service")
 		return
 	}
 	defer resp.Body.Close()
 
-	log.Printf("[ProxyHandler] Got response from project service: %d", resp.StatusCode)
+	slog.Debug("received response from project service", slog.Int("status", resp.StatusCode))
 
 	if err := client.CopyResponse(w, resp); err != nil {
-		log.Printf("[ProxyHandler] Error copying response: %v", err)
+		slog.Error("failed to copy response", slog.String("error", err.Error()))
 	}
 }
 
@@ -53,6 +55,11 @@ func (h *ProxyHandler) HandleData(w http.ResponseWriter, r *http.Request) {
 	// Extract path after /data
 	path := strings.TrimPrefix(r.URL.Path, "/data")
 	
+	slog.Debug("proxying to data service",
+		slog.String("original_path", r.URL.Path),
+		slog.String("proxy_path", path),
+	)
+	
 	// Add query parameters
 	if r.URL.RawQuery != "" {
 		path += "?" + r.URL.RawQuery
@@ -60,14 +67,16 @@ func (h *ProxyHandler) HandleData(w http.ResponseWriter, r *http.Request) {
 
 	resp, err := h.dataClient.ProxyRequest(r, path)
 	if err != nil {
-		log.Printf("Error proxying to data service: %v", err)
+		slog.Error("failed to proxy to data service", slog.String("error", err.Error()))
 		writeError(w, http.StatusBadGateway, "Failed to reach data service")
 		return
 	}
 	defer resp.Body.Close()
 
+	slog.Debug("received response from data service", slog.Int("status", resp.StatusCode))
+
 	if err := client.CopyResponse(w, resp); err != nil {
-		log.Printf("Error copying response: %v", err)
+		slog.Error("failed to copy response", slog.String("error", err.Error()))
 	}
 }
 

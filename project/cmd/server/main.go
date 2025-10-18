@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"log/slog"
 	"net/http"
 
 	"github.com/go-mockingcode/project/internal/config"
@@ -10,6 +11,7 @@ import (
 	"github.com/go-mockingcode/project/internal/middleware"
 	"github.com/go-mockingcode/project/internal/repository"
 	"github.com/go-mockingcode/project/internal/service"
+	applogger "github.com/go-mockingcode/logger"
 	"github.com/joho/godotenv"
 
 	_ "github.com/go-mockingcode/project/docs"
@@ -43,6 +45,10 @@ func main() {
 
 	// Load Configuration
 	cfg := config.Load()
+
+	// Initialize logger
+	logger := applogger.FromEnv()
+	slog.SetDefault(logger)
 
 	// Connect to DB
 	db, err := database.NewPostgresDB(cfg)
@@ -97,8 +103,10 @@ func main() {
 	handlerWithUserID := middleware.UserIDMiddleware(mux)
 
 	port := cfg.ServerPort
-	log.Printf("Project service starting on port %s", port)
-	log.Printf("Trusting X-User-ID header from API Gateway")
+	logger.Info("Project service starting",
+		slog.String("port", port),
+		slog.String("mode", "API Gateway Pattern - trusting X-User-ID header"),
+	)
 	log.Fatal(http.ListenAndServe(":"+port, handlerWithUserID))
 }
 

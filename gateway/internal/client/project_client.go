@@ -22,11 +22,9 @@ func NewProjectClient(baseURL string) *ProjectClient {
 func (c *ProjectClient) ProxyRequest(r *http.Request, path string) (*http.Response, error) {
 	// Create new request to project service
 	url := c.baseURL + path
-	fmt.Printf("[ProjectClient] Proxying %s to %s\n", r.Method, url)
 	
 	proxyReq, err := http.NewRequest(r.Method, url, r.Body)
 	if err != nil {
-		fmt.Printf("[ProjectClient] Error creating request: %v\n", err)
 		return nil, fmt.Errorf("failed to create proxy request: %w", err)
 	}
 
@@ -36,16 +34,13 @@ func (c *ProjectClient) ProxyRequest(r *http.Request, path string) (*http.Respon
 			proxyReq.Header.Add(key, value)
 		}
 	}
-	fmt.Printf("[ProjectClient] Copied %d headers\n", len(r.Header))
 
 	// Execute request
 	resp, err := c.client.Do(proxyReq)
 	if err != nil {
-		fmt.Printf("[ProjectClient] Error executing request: %v\n", err)
 		return nil, fmt.Errorf("failed to execute proxy request: %w", err)
 	}
 
-	fmt.Printf("[ProjectClient] Got response: %d\n", resp.StatusCode)
 	return resp, nil
 }
 

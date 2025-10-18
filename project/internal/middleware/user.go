@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"context"
-	"log"
+	"log/slog"
 	"net/http"
 )
 
@@ -17,12 +17,12 @@ func UserIDMiddleware(next http.Handler) http.Handler {
 		userID := r.Header.Get("X-User-ID")
 		
 		if userID != "" {
-			log.Printf("[UserIDMiddleware] Extracted user ID from header: %s", userID)
+			slog.Debug("extracted user_id from header", slog.String("user_id", userID))
 			ctx := context.WithValue(r.Context(), UserIDKey, userID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		} else {
 			// No user ID header - for public endpoints like /health
-			log.Printf("[UserIDMiddleware] No X-User-ID header for: %s", r.URL.Path)
+			slog.Debug("no X-User-ID header", slog.String("path", r.URL.Path))
 			next.ServeHTTP(w, r)
 		}
 	})
