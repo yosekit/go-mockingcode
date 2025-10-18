@@ -18,14 +18,6 @@ services:
     volumes:
       - mongo_data:/data/db
 
-  redis:
-    image: redis:alpine
-    ports:
-      - "${REDIS_PORT}:6379"
-    command: redis-server --appendonly yes
-    volumes:
-      - redis_data:/data
-
   auth:
     build:
       context: ..
@@ -110,4 +102,3 @@ services:
 volumes:
   postgres_data:
   mongo_data:
-  redis_data:

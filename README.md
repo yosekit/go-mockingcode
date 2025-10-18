@@ -15,7 +15,6 @@ Microservices-based platform built with Go.
 **Databases:**
 - PostgreSQL - Users, projects, schemas
 - MongoDB - Mock data storage
-- Redis - Caching
 
 ## Quick Start
 
@@ -122,7 +121,6 @@ Swagger UI available for each service:
 - 8083 - Data Service
 - 5432 - PostgreSQL
 - 27017 - MongoDB
-- 6379 - Redis
 
 ## Features
 
