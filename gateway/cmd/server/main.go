@@ -47,12 +47,21 @@ func main() {
 	slog.SetDefault(logger)
 
 	// Initialize service clients
-	authClient := client.NewAuthClient(cfg.AuthServiceURL)
+	// Using gRPC for auth token validation (faster, type-safe)
+	authGRPCClient, err := client.NewAuthGRPCClient(cfg.AuthGRPCURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to auth gRPC service: %v", err)
+	}
+	defer authGRPCClient.Close()
+
+	// HTTP clients for proxying full requests
 	projectClient := client.NewProjectClient(cfg.ProjectServiceURL)
 	dataClient := client.NewDataClient(cfg.DataServiceURL)
 
 	// Initialize handlers
-	authHandler := handler.NewAuthHandler(authClient)
+	// Auth handler still uses HTTP client for register/login/refresh (not performance critical)
+	authHTTPClient := client.NewAuthClient(cfg.AuthServiceURL)
+	authHandler := handler.NewAuthHandler(authHTTPClient)
 	proxyHandler := handler.NewProxyHandler(projectClient, dataClient)
 	adminHandler := handler.NewAdminHandler()
 
@@ -94,7 +103,8 @@ func main() {
 
 	// Apply middleware chain
 	handler := middleware.CORSMiddleware(cfg)(mux)
-	handler = middleware.AuthMiddleware(authClient)(handler)
+	// Use gRPC client for auth middleware (faster validation)
+	handler = middleware.AuthMiddleware(authGRPCClient)(handler)
 
 	// Start server
 	logger.Info("API Gateway starting",

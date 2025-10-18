@@ -14,7 +14,8 @@ type contextKey string
 const UserIDKey contextKey = "user_id"
 
 // AuthMiddleware validates JWT token for protected routes
-func AuthMiddleware(authClient *client.AuthClient) func(http.Handler) http.Handler {
+// Accepts any client that implements TokenValidator interface (HTTP or gRPC)
+func AuthMiddleware(authClient client.TokenValidator) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			slog.Debug("auth middleware",

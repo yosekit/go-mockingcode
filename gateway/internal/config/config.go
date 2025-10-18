@@ -9,10 +9,14 @@ import (
 type Config struct {
 	ServerPort string
 
-	// Service URLs
+	// Service URLs (HTTP - для backward compatibility)
 	AuthServiceURL    string
 	ProjectServiceURL string
 	DataServiceURL    string
+
+	// gRPC URLs
+	AuthGRPCURL    string
+	ProjectGRPCURL string
 
 	// CORS Settings
 	CORSAllowedOrigins []string
@@ -41,12 +45,19 @@ func Load() *Config {
 		dataURL = fmt.Sprintf("http://localhost:%s", env.GetString("DATA_PORT", "8083"))
 	}
 
+	// gRPC URLs
+	authGRPCURL := env.GetString("AUTH_GRPC_URL", "localhost:9081")
+	projectGRPCURL := env.GetString("PROJECT_GRPC_URL", "localhost:9082")
+
 	return &Config{
 		ServerPort: env.GetString("GATEWAY_PORT", "8080"),
 
 		AuthServiceURL:    authURL,
 		ProjectServiceURL: projectURL,
 		DataServiceURL:    dataURL,
+
+		AuthGRPCURL:    authGRPCURL,
+		ProjectGRPCURL: projectGRPCURL,
 
 		CORSAllowedOrigins: []string{"*"}, // TODO: configure properly
 		CORSAllowedMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},

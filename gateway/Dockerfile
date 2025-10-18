@@ -5,6 +5,7 @@ WORKDIR /build
 
 # Copy shared modules
 COPY pkg/logger/ ./pkg/logger/
+COPY pkg/proto/ ./pkg/proto/
 
 # Copy gateway service
 COPY gateway/ ./gateway/

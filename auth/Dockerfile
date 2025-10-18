@@ -6,6 +6,7 @@ WORKDIR /build
 # Copy shared modules to match replace directive
 COPY pkg/models/ ./pkg/models/
 COPY pkg/logger/ ./pkg/logger/
+COPY pkg/proto/ ./pkg/proto/
 
 # Copy auth service
 COPY auth/ ./auth/
@@ -25,7 +26,7 @@ WORKDIR /root/
 # Copy binary from builder
 COPY --from=builder /build/auth/auth .
 
-EXPOSE 8081
+EXPOSE 8081 9081
 
 CMD ["./auth"]
 

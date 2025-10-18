@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "github.com/go-mockingcode/proto";
+
+// ProjectService provides project information
+service ProjectService {
+  // ValidateAPIKey validates project API key and returns project info
+  rpc ValidateAPIKey(ValidateAPIKeyRequest) returns (ValidateAPIKeyResponse);
+}
+
+// ValidateAPIKeyRequest contains API key to validate
+message ValidateAPIKeyRequest {
+  string api_key = 1;
+}
+
+// ValidateAPIKeyResponse contains project information
+message ValidateAPIKeyResponse {
+  bool valid = 1;
+  int64 project_id = 2;
+  string project_name = 3;
+  int64 user_id = 4;
+}
+

@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package proto;
+
+option go_package = "github.com/go-mockingcode/proto";
+
+// AuthService provides authentication and token validation
+service AuthService {
+  // ValidateToken validates JWT access token
+  rpc ValidateToken(ValidateTokenRequest) returns (ValidateTokenResponse);
+}
+
+// ValidateTokenRequest contains JWT token to validate
+message ValidateTokenRequest {
+  string token = 1;
+}
+
+// ValidateTokenResponse contains validation result
+message ValidateTokenResponse {
+  bool valid = 1;
+  int64 user_id = 2;
+  string email = 3;
+}
+

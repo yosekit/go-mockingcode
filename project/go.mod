@@ -5,13 +5,17 @@ go 1.24.0
 require (
 	github.com/go-mockingcode/logger v0.0.0
 	github.com/go-mockingcode/models v0.0.0
+	github.com/go-mockingcode/proto v0.0.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.6
+	google.golang.org/grpc v1.70.0
 )
 
 replace github.com/go-mockingcode/logger => ../pkg/logger
+
+replace github.com/go-mockingcode/proto => ../pkg/proto
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
@@ -30,7 +34,11 @@ require (
 	golang.org/x/mod v0.29.0 // indirect
 	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/sync v0.17.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/text v0.30.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250127172529-29210b9bc287 // indirect
+	google.golang.org/protobuf v1.36.4 // indirect
 )
 
 replace github.com/go-mockingcode/models => ../pkg/models

@@ -3,16 +3,21 @@ package main
 import (
 	"log"
 	"log/slog"
+	"net"
 	"net/http"
+	"os"
 
 	"github.com/go-mockingcode/project/internal/config"
 	"github.com/go-mockingcode/project/internal/database"
+	projectgrpc "github.com/go-mockingcode/project/internal/grpc"
 	"github.com/go-mockingcode/project/internal/handler"
 	"github.com/go-mockingcode/project/internal/middleware"
 	"github.com/go-mockingcode/project/internal/repository"
 	"github.com/go-mockingcode/project/internal/service"
 	applogger "github.com/go-mockingcode/logger"
+	pb "github.com/go-mockingcode/proto"
 	"github.com/joho/godotenv"
+	"google.golang.org/grpc"
 
 	_ "github.com/go-mockingcode/project/docs"
 
@@ -103,10 +108,34 @@ func main() {
 	handlerWithUserID := middleware.UserIDMiddleware(mux)
 
 	port := cfg.ServerPort
+	grpcPort := os.Getenv("GRPC_PORT")
+	if grpcPort == "" {
+		grpcPort = "9082"
+	}
+
 	logger.Info("Project service starting",
-		slog.String("port", port),
+		slog.String("http_port", port),
+		slog.String("grpc_port", grpcPort),
 		slog.String("mode", "API Gateway Pattern - trusting X-User-ID header"),
 	)
+
+	// Start gRPC server in goroutine
+	go func() {
+		lis, err := net.Listen("tcp", ":"+grpcPort)
+		if err != nil {
+			log.Fatalf("Failed to listen on gRPC port: %v", err)
+		}
+
+		grpcServer := grpc.NewServer()
+		pb.RegisterProjectServiceServer(grpcServer, projectgrpc.NewProjectGRPCServer(projectService))
+
+		slog.Info("gRPC server starting", slog.String("port", grpcPort))
+		if err := grpcServer.Serve(lis); err != nil {
+			log.Fatalf("Failed to serve gRPC: %v", err)
+		}
+	}()
+
+	// Start HTTP server
 	log.Fatal(http.ListenAndServe(":"+port, handlerWithUserID))
 }
 
