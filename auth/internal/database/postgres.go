@@ -3,7 +3,7 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	"log"
+	"log/slog"
 
 	"github.com/go-mockingcode/auth/internal/config"
 	_ "github.com/lib/pq"
@@ -12,6 +12,11 @@ import (
 func NewPostgresDB(cfg *config.Config) (*sql.DB, error) {
 	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
         cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName)
+
+	slog.Info("connecting to PostgreSQL",
+		slog.String("host", cfg.DBHost),
+		slog.String("database", cfg.DBName),
+	)
 	
 	db, err := sql.Open("postgres", connStr)
 	if err != nil{
@@ -26,6 +31,5 @@ func NewPostgresDB(cfg *config.Config) (*sql.DB, error) {
 		return nil, fmt.Errorf("failed to ping database: %v", err)
 	}
 
-	log.Println("Successfully connected to PostgreSQL")
 	return db, nil
 }

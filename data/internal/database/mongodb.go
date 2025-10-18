@@ -3,7 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
-	"log"
+	"log/slog"
 
 	"github.com/go-mockingcode/data/internal/config"
 	"go.mongodb.org/mongo-driver/v2/mongo"
@@ -14,12 +14,11 @@ func NewMongoDB(cfg *config.DataConfig) (*mongo.Client, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.MongoDBTimeout)
 	defer cancel()
 
-	// TODO Get application host
-	uri := "mongodb://localhost:" + cfg.MongoDBPort
-
 	clientOptions := options.Client().
-		ApplyURI(uri).
+		ApplyURI(cfg.MongoURI).
 		SetTimeout(cfg.MongoDBTimeout)
+
+	slog.Info("connecting to MongoDB", slog.String("uri", cfg.MongoURI))
 
 	client, err := mongo.Connect(clientOptions)
 	if err != nil {
@@ -31,6 +30,6 @@ func NewMongoDB(cfg *config.DataConfig) (*mongo.Client, error) {
 		return nil, fmt.Errorf("failed to ping MongoDB: %v", err)
 	}
 
-	log.Println("Data service: Successfully connected to MongoDB")
+	slog.Info("Successfully connected to MongoDB")
 	return client, nil
 }

@@ -9,7 +9,7 @@ import (
 type DataConfig struct {
 	ServerPort string
 
-	MongoDBPort    string
+	MongoURI       string
 	MongoDBName    string
 	MongoDBTimeout time.Duration
 
@@ -22,11 +22,11 @@ type DataConfig struct {
 func Load() *DataConfig {
 	return &DataConfig{
 		// Server
-		ServerPort: env.GetString("DATA_PORT", "8083"),
+		ServerPort: env.GetString("PORT", "8083"),
 
 		// MongoDB
-		MongoDBPort:    env.GetString("MONGO_PORT", "27017"), // mongodb://localhost:port
-		MongoDBName:    env.GetString("MONGO_DB", "mockingcode"),
+		MongoURI:       env.GetString("MONGO_URI", "mongodb://localhost:27017"),
+		MongoDBName:    env.GetString("MONGO_DB_NAME", "mockingcode"),
 		MongoDBTimeout: env.GetDuration("MONGO_TIMEOUT", 10*time.Second),
 
 		// External services
