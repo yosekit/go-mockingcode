@@ -1,326 +1,140 @@
 # MockingCode
 
-Backend-as-a-Service platform (аналог Firebase/Supabase) на Go с микросервисной архитектурой.
+Backend-as-a-Service platform for mock data generation and API prototyping.
 
-## 🏗️ Архитектура
+## Architecture
 
-```
-┌─────────────┐
-│   Gateway   │ :8080 - Единая точка входа (API Gateway)
-└─────┬───────┘
-      │
-      ├──────────┐
-      │          │
-┌─────▼───┐  ┌──▼──────┐  ┌────────┐
-│  Auth   │  │ Project │  │  Data  │
-│ :8081   │  │  :8082  │  │ :8083  │
-└─────┬───┘  └────┬────┘  └────┬───┘
-      │           │             │
-┌─────▼───────────▼───┐    ┌───▼─────┐
-│    PostgreSQL       │    │ MongoDB │
-│      :5432          │    │  :27017 │
-└─────────────────────┘    └─────────┘
-```
+Microservices-based platform built with Go.
 
-### Микросервисы
+**Services:**
+- Gateway (8080) - API Gateway with authentication
+- Auth Service (8081) - User authentication and JWT tokens
+- Project Service (8082) - Project and schema management
+- Data Service (8083) - Mock data CRUD operations
 
-- **Gateway** (8080) - API Gateway, CORS, аутентификация, проксирование
-- **Auth Service** (8081) - регистрация, логин, JWT токены
-- **Project Service** (8082) - управление проектами и схемами (коллекциями)
-- **Data Service** (8083) - CRUD для моковых данных
+**Databases:**
+- PostgreSQL - Users, projects, schemas
+- MongoDB - Mock data storage
+- Redis - Caching
 
-### Базы данных
-
-- **PostgreSQL** - хранение пользователей, проектов, схем
-- **MongoDB** - хранение моковых данных
-- **Redis** - кеширование (готов к использованию)
-
-## 🚀 Быстрый старт
-
-### Предварительные требования
-
-- Docker Desktop
-- Windows Terminal с Ubuntu WSL2
-- Cursor IDE (опционально)
-
-### Запуск через автоматический скрипт
-
-**Windows:**
-```bash
-# Запуск окружения (Docker + WSL + Cursor + сервисы)
-.\start-dev-environment.bat
-
-# Для остановки введите 'exit' в окне скрипта
-```
-
-### Ручной запуск
+## Quick Start
 
 ```bash
-# 1. Запустите Docker Desktop
-
-# 2. Перейдите в директорию проекта
-cd /usr/projects/mockingcode
-
-# 3. Запустите все сервисы
+# Start all services
 docker-compose -f docker/docker-compose.dev.yml up -d
 
-# 4. Проверьте статус
+# Check status
 docker-compose -f docker/docker-compose.dev.yml ps
 
-# 5. Посмотрите логи
+# View logs
 docker-compose -f docker/docker-compose.dev.yml logs -f
-```
 
-### Остановка сервисов
-
-```bash
-# Остановить все контейнеры
+# Stop services
 docker-compose -f docker/docker-compose.dev.yml down
-
-# Остановить с удалением volumes (ВНИМАНИЕ: удалит все данные)
-docker-compose -f docker/docker-compose.dev.yml down -v
 ```
 
-## 📡 API Endpoints
+## API Endpoints
 
-### Базовый URL
-```
-http://localhost:8080
-```
+Base URL: `http://localhost:8080`
 
-### Аутентификация (публичные)
+**Authentication:**
+- `POST /auth/register` - User registration
+- `POST /auth/login` - User login
+- `POST /auth/refresh` - Refresh token
+
+**Projects (requires JWT):**
+- `GET/POST /api/projects` - List/Create projects
+- `GET/PUT/DELETE /api/projects/{id}` - Manage project
+- `GET/POST /api/projects/{id}/collections` - List/Create collections
+- `GET/PUT/DELETE /api/projects/{id}/collections/{collectionId}` - Manage collection
+
+**Data (requires JWT):**
+- `GET/POST /data/{collection}` - List/Create documents
+- `GET/PUT/DELETE /data/{collection}/{id}` - Manage document
+
+**Admin:**
+- `GET /admin/log-level` - Get current log level
+- `PUT /admin/log-level?level=debug` - Change log level (debug|info|warn|error)
+
+## Testing
 
 ```bash
-# Регистрация
-POST /auth/register
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-
-# Вход
-POST /auth/login
-{
-  "email": "user@example.com",
-  "password": "password123"
-}
-
-# Обновление токена
-POST /auth/refresh
-{
-  "refresh_token": "..."
-}
-```
-
-### Проекты (требуется JWT)
-
-```bash
-# Все запросы требуют заголовок:
-# Authorization: Bearer {access_token}
-
-# Список проектов
-GET /api/projects
-
-# Создать проект
-POST /api/projects
-{
-  "name": "My Project",
-  "description": "Project description"
-}
-
-# Получить проект
-GET /api/projects/{id}
-
-# Обновить проект
-PUT /api/projects/{id}
-{
-  "name": "Updated Name"
-}
-
-# Удалить проект
-DELETE /api/projects/{id}
-
-# Коллекции проекта
-GET /api/projects/{id}/collections
-POST /api/projects/{id}/collections
-GET /api/projects/{id}/collections/{collectionId}
-PUT /api/projects/{id}/collections/{collectionId}
-DELETE /api/projects/{id}/collections/{collectionId}
-```
-
-### Данные (требуется JWT + API Key)
-
-```bash
-# CRUD для документов
-GET    /data/{collection}
-POST   /data/{collection}
-GET    /data/{collection}/{id}
-PUT    /data/{collection}/{id}
-DELETE /data/{collection}/{id}
-```
-
-## 🧪 Тестирование
-
-```bash
-# Автоматический тест всех endpoints
 ./tests/gateway_test.sh
-
-# Ручное тестирование
-curl http://localhost:8080/health
 ```
 
-## 🛠️ Разработка
+## Development
 
-### Структура проекта
-
+**Structure:**
 ```
 mockingcode/
-├── auth/           # Сервис аутентификации
-├── project/        # Сервис проектов
-├── data/           # Сервис данных
-├── gateway/        # API Gateway
-├── pkg/            # Общие модули
-│   └── models/     # Общие модели данных
-├── docker/         # Docker конфигурация
-│   ├── docker-compose.dev.yml
-│   └── .env
-├── tests/          # Тесты
-└── go.work         # Go workspace
+├── auth/           - Authentication service
+├── project/        - Project management service  
+├── data/           - Data service
+├── gateway/        - API Gateway
+├── pkg/            - Shared modules (models, logger)
+├── docker/         - Docker configuration
+└── tests/          - Integration tests
 ```
 
-### Локальная разработка
-
+**Commands:**
 ```bash
-# Запуск отдельного сервиса
-cd auth
-go run cmd/server/main.go
-
-# Обновление зависимостей
-go mod tidy
-
-# Генерация Swagger документации (если нужно)
-cd project
-swag init -g cmd/server/main.go
-```
-
-### Docker Compose
-
-```bash
-# Пересобрать конкретный сервис
+# Rebuild specific service
 docker-compose -f docker/docker-compose.dev.yml build gateway
 
-# Перезапустить конкретный сервис
-docker-compose -f docker/docker-compose.dev.yml restart gateway
-
-# Посмотреть логи конкретного сервиса
+# View logs
 docker-compose -f docker/docker-compose.dev.yml logs -f gateway
+
+# Run local service
+cd auth && go run cmd/server/main.go
 ```
 
-## 📝 Конфигурация
+## Configuration
 
-### Переменные окружения
-
-См. `docker/.env`:
+Environment variables in `docker/.env`:
 
 ```env
-# Базы данных
 DB_NAME=mockdb
 DB_USER=mockuser
 DB_PASSWORD=mockpass
-DB_PORT=5432
 MONGO_PORT=27017
-
-# Порты сервисов
 AUTH_PORT=8081
 PROJECT_PORT=8082
 DATA_PORT=8083
 GATEWAY_PORT=8080
-
-# JWT
 JWT_SECRET=your-secret-key
+LOG_LEVEL=info
+LOG_FORMAT=text
 ```
 
-## 📚 Документация API
+## Documentation
 
-- Gateway: `http://localhost:8080/swagger/`
-- Auth: `http://localhost:8081/swagger/`
-- Project: `http://localhost:8082/swagger/`
-- Data: `http://localhost:8083/swagger/`
+Swagger UI available for each service:
+- `http://localhost:8080/swagger/` - Gateway
+- `http://localhost:8081/swagger/` - Auth
+- `http://localhost:8082/swagger/` - Project
+- `http://localhost:8083/swagger/` - Data
 
-## 🎯 План развития
+## Ports
 
-### ✅ Выполнено
+- 8080 - Gateway
+- 8081 - Auth Service
+- 8082 - Project Service
+- 8083 - Data Service
+- 5432 - PostgreSQL
+- 27017 - MongoDB
+- 6379 - Redis
 
-- [x] Фаза 1: Настройка окружения (WSL2, Docker, Go workspace)
-- [x] Фаза 2.1: Auth Service (регистрация, логин, JWT)
-- [x] Фаза 2.2: Project Service (CRUD проектов)
-- [x] Фаза 2.4: Management API Gateway
-- [x] Фаза 3.1: Project Service - CRUD схем/коллекций
-- [x] Фаза 3.2: Data Service - CRUD моковых данных
+## Features
 
-### 🚧 В процессе
+- JWT-based authentication
+- API Gateway Pattern with centralized auth
+- Structured logging with dynamic log levels
+- Docker-based deployment
+- RESTful API
+- Mock data generation
+- Go workspace monorepo
 
-- [ ] Фаза 2.3: gRPC между сервисами
-- [ ] Фаза 3.3: Dynamic Router API Gateway (поддомены)
-- [ ] Фаза 4: Frontend (Next.js/Nuxt.js)
-- [ ] Фаза 5: Генерация данных (Faker), API First, документация
-
-## 🤝 Автоматизация
-
-### Windows скрипты
-
-- `start-dev-environment.bat` - запуск всего окружения
-- `start-dev-environment.ps1` - PowerShell версия (с цветным выводом)
-
-Скрипты автоматически:
-1. Запускают Docker Desktop
-2. Открывают Ubuntu консоль в проекте
-3. Запускают Cursor
-4. Поднимают все сервисы через docker-compose
-5. При вводе `exit` - останавливают всё и очищают
-
-## 📞 Порты
-
-- **8080** - Gateway (единая точка входа)
-- **8081** - Auth Service
-- **8082** - Project Service
-- **8083** - Data Service
-- **5432** - PostgreSQL
-- **27017** - MongoDB
-- **6379** - Redis
-
-## 🔧 Troubleshooting
-
-### Ошибка подключения к БД
-
-```bash
-# Проверьте что БД запущены
-docker-compose -f docker/docker-compose.dev.yml ps
-
-# Пересоздайте контейнеры БД
-docker-compose -f docker/docker-compose.dev.yml up -d postgres mongodb
-```
-
-### Порт уже занят
-
-```bash
-# Найдите процесс
-netstat -ano | findstr :8080
-
-# Остановите процесс или измените порт в .env
-```
-
-### Сборка не проходит
-
-```bash
-# Очистите старые образы
-docker system prune -a
-
-# Пересоберите без кеша
-docker-compose -f docker/docker-compose.dev.yml build --no-cache
-```
-
-## 📄 Лицензия
+## License
 
 MIT
 
