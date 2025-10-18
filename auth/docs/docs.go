@@ -346,8 +346,6 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "Authentication service for MockingCode platform",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-	LeftDelim:        "{{",
-	RightDelim:       "}}",
 }
 
 func init() {

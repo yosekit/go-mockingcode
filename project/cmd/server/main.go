@@ -8,7 +8,6 @@ import (
 	"github.com/go-mockingcode/project/internal/database"
 	"github.com/go-mockingcode/project/internal/handler"
 	"github.com/go-mockingcode/project/internal/middleware"
-	"github.com/go-mockingcode/project/internal/pkg/auth"
 	"github.com/go-mockingcode/project/internal/repository"
 	"github.com/go-mockingcode/project/internal/service"
 	"github.com/joho/godotenv"
@@ -78,9 +77,6 @@ func main() {
 	collectionHandler := handler.NewCollectionHandler(projectService, collectionService)
 	apiKeyHandler := handler.NewAPIKeyHandler(projectService)
 
-	// Init Auth Client
-	authClient := auth.NewAuthClient(cfg.AuthServiceURL)
-
 	// Route Settings
 	mux := http.NewServeMux()
 
@@ -88,20 +84,22 @@ func main() {
 	mux.HandleFunc("/health", healthHandler)
 	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 
-	// Application Handlers
+	// Application Handlers (protected by Gateway)
 	mux.HandleFunc("/projects", projectHandler.HandleProjects)
 	mux.HandleFunc("/projects/{id}", projectHandler.HandleProjectByID)
 	mux.HandleFunc("/projects/{id}/collections", collectionHandler.HandleProjectCollections)
 	mux.HandleFunc("/projects/{id}/collections/{collectionId}", collectionHandler.HandleProjectCollectionByID)
 
+	// API Keys validation (used by Data service, not through Gateway)
 	mux.HandleFunc("/api-keys/", apiKeyHandler.ValidateAPIKey)
 
-	// Middleware Settings
-	handlerWithAuth := middleware.AuthMiddleware(authClient)(mux)
+	// Middleware Settings - extract user ID from X-User-ID header (set by Gateway)
+	handlerWithUserID := middleware.UserIDMiddleware(mux)
 
 	port := cfg.ServerPort
 	log.Printf("Project service starting on port %s", port)
-	log.Fatal(http.ListenAndServe(":"+port, handlerWithAuth))
+	log.Printf("Trusting X-User-ID header from API Gateway")
+	log.Fatal(http.ListenAndServe(":"+port, handlerWithUserID))
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {

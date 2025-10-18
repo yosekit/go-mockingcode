@@ -470,8 +470,6 @@ var SwaggerInfo = &swag.Spec{
 	Description:      "Data service for MockingCode platform",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
-	LeftDelim:        "{{",
-	RightDelim:       "}}",
 }
 
 func init() {

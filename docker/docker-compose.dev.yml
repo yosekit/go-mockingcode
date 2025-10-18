@@ -26,6 +26,72 @@ services:
     volumes:
       - redis_data:/data
 
+  auth:
+    build:
+      context: ..
+      dockerfile: auth/Dockerfile
+    ports:
+      - "${AUTH_PORT:-8081}:8081"
+    environment:
+      - PORT=8081
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - JWT_SECRET=${JWT_SECRET:-super-secret-jwt-key}
+    depends_on:
+      - postgres
+
+  project:
+    build:
+      context: ..
+      dockerfile: project/Dockerfile
+    ports:
+      - "${PROJECT_PORT:-8082}:8082"
+    environment:
+      - PROJECT_PORT=8082
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - AUTH_SERVICE_URL=http://auth:8081
+    depends_on:
+      - postgres
+      - auth
+
+  data:
+    build:
+      context: ..
+      dockerfile: data/Dockerfile
+    ports:
+      - "${DATA_PORT:-8083}:8083"
+    environment:
+      - PORT=8083
+      - MONGO_URI=mongodb://mongodb:27017
+      - MONGO_DB_NAME=${MONGO_DB_NAME:-mockingcode}
+      - PROJECT_PORT=8082
+    depends_on:
+      - mongodb
+      - project
+
+  gateway:
+    build:
+      context: ..
+      dockerfile: gateway/Dockerfile
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    environment:
+      - GATEWAY_PORT=8080
+      - AUTH_SERVICE_URL=http://auth:8081
+      - PROJECT_SERVICE_URL=http://project:8082
+      - DATA_SERVICE_URL=http://data:8083
+    depends_on:
+      - auth
+      - project
+      - data
+
 volumes:
   postgres_data:
   mongo_data:

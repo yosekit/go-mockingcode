@@ -9,7 +9,6 @@ import (
 	"github.com/go-mockingcode/data/internal/database"
 	"github.com/go-mockingcode/data/internal/handler"
 	"github.com/go-mockingcode/data/internal/middleware"
-	"github.com/go-mockingcode/data/internal/pkg/project"
 	"github.com/go-mockingcode/data/internal/repository"
 	"github.com/go-mockingcode/data/internal/service"
 	"github.com/joho/godotenv"
@@ -61,9 +60,6 @@ func main() {
 	// Init Handlers
 	docHandler := handler.NewDocumentHandler(docService)
 
-	// Init Project Client
-	projectClient := project.NewProjectClient("http://localhost:" + cfg.ProjectPort) // TODO
-
 	// Route Settings
 	mux := http.NewServeMux()
 
@@ -74,28 +70,13 @@ func main() {
 
 	mux.Handle("/swagger/", httpSwagger.WrapHandler)
 
-	// Application Handlers
-	// mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-	// 	pathParts := strings.Split(r.URL.Path, "/")
-
-	// 	// После middleware путь будет: /{collection} или /{collection}/{id}
-	// 	if len(pathParts) == 2 && pathParts[1] != "" {
-	// 		// /{collection}
-	// 		docHandler.HandleCollection(w, r)
-	// 	} else if len(pathParts) == 3 && pathParts[1] != "" && pathParts[2] != "" {
-	// 		// /{collection}/{id}
-	// 		docHandler.HandleDocument(w, r)
-	// 	} else {
-	// 		writeErrorJson(w, http.StatusNotFound, "Endpoint not found")
-	// 	}
-	// })
-
-	// Middleware Settings
-	handlerWithAuth := middleware.AuthMiddleware(projectClient)(mux)
+	// Middleware Settings - extract user ID from X-User-ID header (set by Gateway)
+	handlerWithUserID := middleware.ProjectInfoMiddleware()(mux)
 
 	port := cfg.ServerPort
 	log.Printf("Data service starting on port %s", port)
-	log.Fatal(http.ListenAndServe(":"+port, handlerWithAuth))
+	log.Printf("Trusting X-User-ID header from API Gateway")
+	log.Fatal(http.ListenAndServe(":"+port, handlerWithUserID))
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {

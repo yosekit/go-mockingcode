@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-mockingcode/project/internal/middleware"
 	"github.com/go-mockingcode/project/internal/model"
-	"github.com/go-mockingcode/project/internal/pkg/context"
 	"github.com/go-mockingcode/project/internal/service"
 )
 
@@ -196,9 +196,17 @@ func (h *ProjectHandler) DeleteProject(w http.ResponseWriter, r *http.Request, u
 }
 
 func extractUserID(w http.ResponseWriter, r *http.Request) (int64, error) {
-	userID, err := context.GetUserID(r.Context())
-	if err != nil {
+	// Get user ID from middleware (set by API Gateway via X-User-ID header)
+	userIDStr, ok := middleware.GetUserID(r.Context())
+	if !ok || userIDStr == "" {
 		writeErrorJson(w, http.StatusUnauthorized, "User not authenticated")
+		return 0, fmt.Errorf("no user ID in context")
+	}
+	
+	// Convert string to int64
+	userID, err := strconv.ParseInt(userIDStr, 10, 64)
+	if err != nil {
+		writeErrorJson(w, http.StatusUnauthorized, "Invalid user ID")
 		return 0, err
 	}
 

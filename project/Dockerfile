@@ -6,13 +6,13 @@ WORKDIR /build
 # Copy shared models to match replace directive
 COPY pkg/models/ ./pkg/models/
 
-# Copy auth service
-COPY auth/ ./auth/
+# Copy project service
+COPY project/ ./project/
 
 # Set working dir and build
-WORKDIR /build/auth
+WORKDIR /build/project
 RUN go mod download && \
-    CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o auth ./cmd/server
+    CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o project ./cmd/server
 
 # Runtime stage
 FROM alpine:latest
@@ -22,9 +22,9 @@ RUN apk --no-cache add ca-certificates
 WORKDIR /root/
 
 # Copy binary from builder
-COPY --from=builder /build/auth/auth .
+COPY --from=builder /build/project/project .
 
-EXPOSE 8081
+EXPOSE 8082
 
-CMD ["./auth"]
+CMD ["./project"]
 

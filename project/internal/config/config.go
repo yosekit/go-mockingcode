@@ -48,6 +48,6 @@ func Load() *Config {
 
 		BaseURLFormat: env.GetString("PROJECT_BASE_URL_FORMAT", "https://{api_key}.api.mockingcode.com"),
 
-		AuthServiceURL: fmt.Sprintf("http://localhost:%s", env.GetString("AUTH_PORT", "8081")),
+		AuthServiceURL: env.GetString("AUTH_SERVICE_URL", fmt.Sprintf("http://localhost:%s", env.GetString("AUTH_PORT", "8081"))),
 	}
 }
