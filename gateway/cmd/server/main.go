@@ -54,6 +54,13 @@ func main() {
 	}
 	defer authGRPCClient.Close()
 
+	// Using gRPC for API key validation (faster, type-safe)
+	projectGRPCClient, err := client.NewProjectGRPCClient(cfg.ProjectGRPCURL)
+	if err != nil {
+		log.Fatalf("Failed to connect to project gRPC service: %v", err)
+	}
+	defer projectGRPCClient.Close()
+
 	// HTTP clients for proxying full requests
 	projectClient := client.NewProjectClient(cfg.ProjectServiceURL)
 	dataClient := client.NewDataClient(cfg.DataServiceURL)
@@ -63,6 +70,7 @@ func main() {
 	authHTTPClient := client.NewAuthClient(cfg.AuthServiceURL)
 	authHandler := handler.NewAuthHandler(authHTTPClient)
 	proxyHandler := handler.NewProxyHandler(projectClient, dataClient)
+	dataAPIHandler := handler.NewPublicAPIHandler(dataClient)
 	adminHandler := handler.NewAdminHandler()
 
 	// Setup routing
@@ -71,7 +79,7 @@ func main() {
 	// Health check
 	mux.HandleFunc("/health", healthHandler)
 
-	// Admin routes (public for now - TODO: add admin auth)
+	// Admin routes (internal - TODO: add admin auth)
 	mux.HandleFunc("/admin/log-level", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			adminHandler.GetLogLevel(w, r)
@@ -87,34 +95,47 @@ func main() {
 	mux.HandleFunc("/auth/login", authHandler.Login)
 	mux.HandleFunc("/auth/refresh", authHandler.Refresh)
 
-	// API routes (protected) - proxy to project service
-	mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
-		slog.Debug("api route handler", slog.String("path", r.URL.Path))
-		if strings.HasPrefix(r.URL.Path, "/api/projects") {
-			proxyHandler.HandleProjects(w, r)
-		} else {
-			slog.Warn("no route match", slog.String("path", r.URL.Path))
-			http.NotFound(w, r)
+	// Frontend API routes (protected - requires JWT)
+	// For UI: https://mockingcode.dev/projects/{api_key}
+	mux.HandleFunc("/projects", proxyHandler.HandleProjects)    // GET list, POST create
+	mux.HandleFunc("/projects/", proxyHandler.HandleProjects)   // GET/PUT/DELETE by api_key, collections
+
+	// Protected routes (JWT-based)
+	protectedHandler := middleware.CORSMiddleware(cfg)(mux)
+	protectedHandler = middleware.AuthMiddleware(authGRPCClient)(protectedHandler)
+
+	// Public Data API routes (protected by API key) - for developers
+	// Pattern: /{api_key}/{collection}[/{id}]
+	// Example: https://{api_key}.mockingcode.dev/users (or http://localhost:8080/{api_key}/users)
+	publicAPIWithMiddleware := middleware.CORSMiddleware(cfg)(http.HandlerFunc(dataAPIHandler.HandlePublicAPI))
+	publicAPIWithMiddleware = middleware.APIKeyMiddleware(projectGRPCClient)(publicAPIWithMiddleware)
+
+	// Main router with intelligent routing
+	mainMux := http.NewServeMux()
+	mainMux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		// Check if this is a public API request (starts with api_key pattern: 16 hex chars)
+		// Pattern: /{api_key}/{collection}
+		pathParts := strings.Split(strings.TrimPrefix(r.URL.Path, "/"), "/")
+		
+		if len(pathParts) >= 2 && len(pathParts[0]) == 16 {
+			// Looks like API key format - route to Public API
+			publicAPIWithMiddleware.ServeHTTP(w, r)
+			return
 		}
+		
+		// Otherwise route to protected Frontend API
+		protectedHandler.ServeHTTP(w, r)
 	})
-
-	// Data routes (protected) - proxy to data service
-	mux.HandleFunc("/data/", proxyHandler.HandleData)
-
-	// Apply middleware chain
-	handler := middleware.CORSMiddleware(cfg)(mux)
-	// Use gRPC client for auth middleware (faster validation)
-	handler = middleware.AuthMiddleware(authGRPCClient)(handler)
 
 	// Start server
 	logger.Info("API Gateway starting",
 		slog.String("port", cfg.ServerPort),
-		slog.String("auth_service", cfg.AuthServiceURL),
-		slog.String("project_service", cfg.ProjectServiceURL),
+		slog.String("auth_grpc", cfg.AuthGRPCURL),
+		slog.String("project_grpc", cfg.ProjectGRPCURL),
 		slog.String("data_service", cfg.DataServiceURL),
 	)
-	
-	if err := http.ListenAndServe(":"+cfg.ServerPort, handler); err != nil {
+
+	if err := http.ListenAndServe(":"+cfg.ServerPort, mainMux); err != nil {
 		log.Fatal("Failed to start gateway:", err)
 	}
 }
@@ -124,4 +145,3 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(`{"status":"ok","service":"gateway"}`))
 }
-

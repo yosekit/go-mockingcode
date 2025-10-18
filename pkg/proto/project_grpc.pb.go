@@ -19,7 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ProjectService_ValidateAPIKey_FullMethodName = "/proto.ProjectService/ValidateAPIKey"
+	ProjectService_ValidateAPIKey_FullMethodName      = "/proto.ProjectService/ValidateAPIKey"
+	ProjectService_GetCollectionSchema_FullMethodName = "/proto.ProjectService/GetCollectionSchema"
 )
 
 // ProjectServiceClient is the client API for ProjectService service.
@@ -30,6 +31,8 @@ const (
 type ProjectServiceClient interface {
 	// ValidateAPIKey validates project API key and returns project info
 	ValidateAPIKey(ctx context.Context, in *ValidateAPIKeyRequest, opts ...grpc.CallOption) (*ValidateAPIKeyResponse, error)
+	// GetCollectionSchema retrieves collection schema by name (for optional validation)
+	GetCollectionSchema(ctx context.Context, in *GetCollectionSchemaRequest, opts ...grpc.CallOption) (*GetCollectionSchemaResponse, error)
 }
 
 type projectServiceClient struct {
@@ -50,6 +53,16 @@ func (c *projectServiceClient) ValidateAPIKey(ctx context.Context, in *ValidateA
 	return out, nil
 }
 
+func (c *projectServiceClient) GetCollectionSchema(ctx context.Context, in *GetCollectionSchemaRequest, opts ...grpc.CallOption) (*GetCollectionSchemaResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetCollectionSchemaResponse)
+	err := c.cc.Invoke(ctx, ProjectService_GetCollectionSchema_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ProjectServiceServer is the server API for ProjectService service.
 // All implementations must embed UnimplementedProjectServiceServer
 // for forward compatibility.
@@ -58,6 +71,8 @@ func (c *projectServiceClient) ValidateAPIKey(ctx context.Context, in *ValidateA
 type ProjectServiceServer interface {
 	// ValidateAPIKey validates project API key and returns project info
 	ValidateAPIKey(context.Context, *ValidateAPIKeyRequest) (*ValidateAPIKeyResponse, error)
+	// GetCollectionSchema retrieves collection schema by name (for optional validation)
+	GetCollectionSchema(context.Context, *GetCollectionSchemaRequest) (*GetCollectionSchemaResponse, error)
 	mustEmbedUnimplementedProjectServiceServer()
 }
 
@@ -70,6 +85,9 @@ type UnimplementedProjectServiceServer struct{}
 
 func (UnimplementedProjectServiceServer) ValidateAPIKey(context.Context, *ValidateAPIKeyRequest) (*ValidateAPIKeyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ValidateAPIKey not implemented")
+}
+func (UnimplementedProjectServiceServer) GetCollectionSchema(context.Context, *GetCollectionSchemaRequest) (*GetCollectionSchemaResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCollectionSchema not implemented")
 }
 func (UnimplementedProjectServiceServer) mustEmbedUnimplementedProjectServiceServer() {}
 func (UnimplementedProjectServiceServer) testEmbeddedByValue()                        {}
@@ -110,6 +128,24 @@ func _ProjectService_ValidateAPIKey_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ProjectService_GetCollectionSchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCollectionSchemaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ProjectServiceServer).GetCollectionSchema(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ProjectService_GetCollectionSchema_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ProjectServiceServer).GetCollectionSchema(ctx, req.(*GetCollectionSchemaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ProjectService_ServiceDesc is the grpc.ServiceDesc for ProjectService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -120,6 +156,10 @@ var ProjectService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ValidateAPIKey",
 			Handler:    _ProjectService_ValidateAPIKey_Handler,
+		},
+		{
+			MethodName: "GetCollectionSchema",
+			Handler:    _ProjectService_GetCollectionSchema_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

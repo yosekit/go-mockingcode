@@ -10,18 +10,25 @@ import (
 
 type ProjectGRPCServer struct {
 	pb.UnimplementedProjectServiceServer
-	projectService *service.ProjectService
+	projectService    *service.ProjectService
+	collectionService *service.CollectionService
 }
 
-func NewProjectGRPCServer(projectService *service.ProjectService) *ProjectGRPCServer {
+func NewProjectGRPCServer(projectService *service.ProjectService, collectionService *service.CollectionService) *ProjectGRPCServer {
 	return &ProjectGRPCServer{
-		projectService: projectService,
+		projectService:    projectService,
+		collectionService: collectionService,
 	}
 }
 
 // ValidateAPIKey validates project API key and returns project info via gRPC
 func (s *ProjectGRPCServer) ValidateAPIKey(ctx context.Context, req *pb.ValidateAPIKeyRequest) (*pb.ValidateAPIKeyResponse, error) {
-	slog.Debug("grpc: validating API key", slog.String("api_key", req.ApiKey[:8]+"..."))
+	// Mask API key for logging
+	maskedKey := req.ApiKey
+	if len(req.ApiKey) > 8 {
+		maskedKey = req.ApiKey[:8] + "..."
+	}
+	slog.Debug("grpc: validating API key", slog.String("api_key", maskedKey))
 
 	project, err := s.projectService.GetProjectByAPIKey(req.ApiKey)
 	if err != nil || project == nil {

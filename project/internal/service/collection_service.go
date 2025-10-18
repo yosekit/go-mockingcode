@@ -15,8 +15,9 @@ type CollectionService struct {
 	maxCollectionsPerProject int
 }
 
-func NewCollectionService(collectionRepo *repository.CollectionRepository, maxCollectionsPerProject int) *CollectionService {
+func NewCollectionService(projectRepo *repository.ProjectRepository, collectionRepo *repository.CollectionRepository, maxCollectionsPerProject int) *CollectionService {
 	return &CollectionService{
+		projectRepo:              projectRepo,
 		collectionRepo:           collectionRepo,
 		maxCollectionsPerProject: maxCollectionsPerProject,
 	}
@@ -79,6 +80,11 @@ func (s *CollectionService) GetProjectCollections(projectID int64, userID int64)
 	}
 
 	return s.collectionRepo.GetProjectCollections(projectID)
+}
+
+// GetCollectionByName возвращает коллекцию по имени (для gRPC, без проверки owner)
+func (s *CollectionService) GetCollectionByName(projectID int64, collectionName string) (*model.Collection, error) {
+	return s.collectionRepo.GetCollectionByName(projectID, collectionName)
 }
 
 // GetCollection возвращает коллекцию по ID

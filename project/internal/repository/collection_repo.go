@@ -110,6 +110,46 @@ func (r *CollectionRepository) GetProjectCollections(projectID int64) ([]*model.
 	return collections, nil
 }
 
+// GetCollectionByName возвращает коллекцию по имени и project_id
+func (r *CollectionRepository) GetCollectionByName(projectID int64, collectionName string) (*model.Collection, error) {
+	query := `
+        SELECT id, project_id, name, description, fields, config, is_active, created_at, updated_at 
+        FROM collections 
+		WHERE project_id = $1 AND name = $2`
+
+	collection := &model.Collection{}
+	var fieldsJSON, configJSON []byte
+
+	err := r.db.QueryRow(query, projectID, collectionName).Scan(
+		&collection.ID,
+		&collection.ProjectID,
+		&collection.Name,
+		&collection.Description,
+		&fieldsJSON,
+		&configJSON,
+		&collection.IsActive,
+		&collection.CreatedAt,
+		&collection.UpdatedAt,
+	)
+
+	if err == sql.ErrNoRows {
+		return nil, nil // Коллекция не найдена (это нормально для гибридного подхода)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to get collection by name: %w", err)
+	}
+
+	// Десериализуем JSON
+	if err := json.Unmarshal(fieldsJSON, &collection.Fields); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal fields: %w", err)
+	}
+	if err := json.Unmarshal(configJSON, &collection.Config); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal config: %w", err)
+	}
+
+	return collection, nil
+}
+
 // GetCollectionByID возвращает коллекцию по ID
 func (r *CollectionRepository) GetCollectionByID(collectionID int64, projectID int64) (*model.Collection, error) {
 	query := `

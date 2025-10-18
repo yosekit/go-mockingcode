@@ -135,6 +135,144 @@ func (x *ValidateAPIKeyResponse) GetUserId() int64 {
 	return 0
 }
 
+// GetCollectionSchemaRequest contains project ID and collection name
+type GetCollectionSchemaRequest struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	ProjectId      int64                  `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+	CollectionName string                 `protobuf:"bytes,2,opt,name=collection_name,json=collectionName,proto3" json:"collection_name,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *GetCollectionSchemaRequest) Reset() {
+	*x = GetCollectionSchemaRequest{}
+	mi := &file_project_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCollectionSchemaRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCollectionSchemaRequest) ProtoMessage() {}
+
+func (x *GetCollectionSchemaRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_project_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCollectionSchemaRequest.ProtoReflect.Descriptor instead.
+func (*GetCollectionSchemaRequest) Descriptor() ([]byte, []int) {
+	return file_project_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetCollectionSchemaRequest) GetProjectId() int64 {
+	if x != nil {
+		return x.ProjectId
+	}
+	return 0
+}
+
+func (x *GetCollectionSchemaRequest) GetCollectionName() string {
+	if x != nil {
+		return x.CollectionName
+	}
+	return ""
+}
+
+// GetCollectionSchemaResponse contains collection schema (if exists)
+type GetCollectionSchemaResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Found         bool                   `protobuf:"varint,1,opt,name=found,proto3" json:"found,omitempty"`
+	CollectionId  int64                  `protobuf:"varint,2,opt,name=collection_id,json=collectionId,proto3" json:"collection_id,omitempty"`
+	Name          string                 `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
+	Description   string                 `protobuf:"bytes,4,opt,name=description,proto3" json:"description,omitempty"`
+	FieldsJson    string                 `protobuf:"bytes,5,opt,name=fields_json,json=fieldsJson,proto3" json:"fields_json,omitempty"` // JSON string of fields array
+	IsActive      bool                   `protobuf:"varint,6,opt,name=is_active,json=isActive,proto3" json:"is_active,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetCollectionSchemaResponse) Reset() {
+	*x = GetCollectionSchemaResponse{}
+	mi := &file_project_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetCollectionSchemaResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetCollectionSchemaResponse) ProtoMessage() {}
+
+func (x *GetCollectionSchemaResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_project_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetCollectionSchemaResponse.ProtoReflect.Descriptor instead.
+func (*GetCollectionSchemaResponse) Descriptor() ([]byte, []int) {
+	return file_project_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetCollectionSchemaResponse) GetFound() bool {
+	if x != nil {
+		return x.Found
+	}
+	return false
+}
+
+func (x *GetCollectionSchemaResponse) GetCollectionId() int64 {
+	if x != nil {
+		return x.CollectionId
+	}
+	return 0
+}
+
+func (x *GetCollectionSchemaResponse) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *GetCollectionSchemaResponse) GetDescription() string {
+	if x != nil {
+		return x.Description
+	}
+	return ""
+}
+
+func (x *GetCollectionSchemaResponse) GetFieldsJson() string {
+	if x != nil {
+		return x.FieldsJson
+	}
+	return ""
+}
+
+func (x *GetCollectionSchemaResponse) GetIsActive() bool {
+	if x != nil {
+		return x.IsActive
+	}
+	return false
+}
+
 var File_project_proto protoreflect.FileDescriptor
 
 const file_project_proto_rawDesc = "" +
@@ -147,9 +285,22 @@ const file_project_proto_rawDesc = "" +
 	"\n" +
 	"project_id\x18\x02 \x01(\x03R\tprojectId\x12!\n" +
 	"\fproject_name\x18\x03 \x01(\tR\vprojectName\x12\x17\n" +
-	"\auser_id\x18\x04 \x01(\x03R\x06userId2_\n" +
+	"\auser_id\x18\x04 \x01(\x03R\x06userId\"d\n" +
+	"\x1aGetCollectionSchemaRequest\x12\x1d\n" +
+	"\n" +
+	"project_id\x18\x01 \x01(\x03R\tprojectId\x12'\n" +
+	"\x0fcollection_name\x18\x02 \x01(\tR\x0ecollectionName\"\xcc\x01\n" +
+	"\x1bGetCollectionSchemaResponse\x12\x14\n" +
+	"\x05found\x18\x01 \x01(\bR\x05found\x12#\n" +
+	"\rcollection_id\x18\x02 \x01(\x03R\fcollectionId\x12\x12\n" +
+	"\x04name\x18\x03 \x01(\tR\x04name\x12 \n" +
+	"\vdescription\x18\x04 \x01(\tR\vdescription\x12\x1f\n" +
+	"\vfields_json\x18\x05 \x01(\tR\n" +
+	"fieldsJson\x12\x1b\n" +
+	"\tis_active\x18\x06 \x01(\bR\bisActive2\xbd\x01\n" +
 	"\x0eProjectService\x12M\n" +
-	"\x0eValidateAPIKey\x12\x1c.proto.ValidateAPIKeyRequest\x1a\x1d.proto.ValidateAPIKeyResponseB!Z\x1fgithub.com/go-mockingcode/protob\x06proto3"
+	"\x0eValidateAPIKey\x12\x1c.proto.ValidateAPIKeyRequest\x1a\x1d.proto.ValidateAPIKeyResponse\x12\\\n" +
+	"\x13GetCollectionSchema\x12!.proto.GetCollectionSchemaRequest\x1a\".proto.GetCollectionSchemaResponseB!Z\x1fgithub.com/go-mockingcode/protob\x06proto3"
 
 var (
 	file_project_proto_rawDescOnce sync.Once
@@ -163,16 +314,20 @@ func file_project_proto_rawDescGZIP() []byte {
 	return file_project_proto_rawDescData
 }
 
-var file_project_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_project_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_project_proto_goTypes = []any{
-	(*ValidateAPIKeyRequest)(nil),  // 0: proto.ValidateAPIKeyRequest
-	(*ValidateAPIKeyResponse)(nil), // 1: proto.ValidateAPIKeyResponse
+	(*ValidateAPIKeyRequest)(nil),       // 0: proto.ValidateAPIKeyRequest
+	(*ValidateAPIKeyResponse)(nil),      // 1: proto.ValidateAPIKeyResponse
+	(*GetCollectionSchemaRequest)(nil),  // 2: proto.GetCollectionSchemaRequest
+	(*GetCollectionSchemaResponse)(nil), // 3: proto.GetCollectionSchemaResponse
 }
 var file_project_proto_depIdxs = []int32{
 	0, // 0: proto.ProjectService.ValidateAPIKey:input_type -> proto.ValidateAPIKeyRequest
-	1, // 1: proto.ProjectService.ValidateAPIKey:output_type -> proto.ValidateAPIKeyResponse
-	1, // [1:2] is the sub-list for method output_type
-	0, // [0:1] is the sub-list for method input_type
+	2, // 1: proto.ProjectService.GetCollectionSchema:input_type -> proto.GetCollectionSchemaRequest
+	1, // 2: proto.ProjectService.ValidateAPIKey:output_type -> proto.ValidateAPIKeyResponse
+	3, // 3: proto.ProjectService.GetCollectionSchema:output_type -> proto.GetCollectionSchemaResponse
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -189,7 +344,7 @@ func file_project_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_project_proto_rawDesc), len(file_project_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

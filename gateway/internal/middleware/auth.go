@@ -85,7 +85,7 @@ func isPublicEndpoint(path string) bool {
 		"/auth/refresh",
 		"/health",
 		"/swagger",
-		"/admin/",  // Admin endpoints are public (TODO: add admin auth)
+		"/admin/",  // Admin endpoints (TODO: add admin auth later)
 	}
 
 	for _, publicPath := range publicPaths {

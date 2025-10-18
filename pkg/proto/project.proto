@@ -8,6 +8,9 @@ option go_package = "github.com/go-mockingcode/proto";
 service ProjectService {
   // ValidateAPIKey validates project API key and returns project info
   rpc ValidateAPIKey(ValidateAPIKeyRequest) returns (ValidateAPIKeyResponse);
+  
+  // GetCollectionSchema retrieves collection schema by name (for optional validation)
+  rpc GetCollectionSchema(GetCollectionSchemaRequest) returns (GetCollectionSchemaResponse);
 }
 
 // ValidateAPIKeyRequest contains API key to validate
@@ -21,5 +24,21 @@ message ValidateAPIKeyResponse {
   int64 project_id = 2;
   string project_name = 3;
   int64 user_id = 4;
+}
+
+// GetCollectionSchemaRequest contains project ID and collection name
+message GetCollectionSchemaRequest {
+  int64 project_id = 1;
+  string collection_name = 2;
+}
+
+// GetCollectionSchemaResponse contains collection schema (if exists)
+message GetCollectionSchemaResponse {
+  bool found = 1;
+  int64 collection_id = 2;
+  string name = 3;
+  string description = 4;
+  string fields_json = 5;  // JSON string of fields array
+  bool is_active = 6;
 }
 

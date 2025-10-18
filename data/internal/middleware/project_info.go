@@ -1,16 +1,20 @@
 package middleware
 
 import (
+	stdcontext "context"
 	"log/slog"
 	"net/http"
+	"strconv"
+
+	appcontext "github.com/go-mockingcode/data/internal/pkg/context"
+	"github.com/go-mockingcode/data/internal/pkg/project"
 )
 
 type contextKey string
 
 const ProjectInfoKey contextKey = "project_info"
 
-// ProjectInfoMiddleware extracts user ID from X-User-ID header (set by API Gateway)
-// For direct API key access in the future, this middleware can be extended
+// ProjectInfoMiddleware extracts user ID and project ID from headers (set by API Gateway)
 func ProjectInfoMiddleware() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -20,22 +24,46 @@ func ProjectInfoMiddleware() func(http.Handler) http.Handler {
 				return
 			}
 
-			// For now, data service is accessed through Gateway
-			// X-User-ID header is set by Gateway after authentication
-			userID := r.Header.Get("X-User-ID")
+			// Extract headers set by Gateway
+			userIDStr := r.Header.Get("X-User-ID")
+			projectIDStr := r.Header.Get("X-Project-ID")
 			
-			if userID != "" {
-				slog.Debug("request from gateway", slog.String("user_id", userID))
-				// In future, we might need to extract project ID from path/body
-				// For now, just pass through - document handlers will handle project validation
-				next.ServeHTTP(w, r)
+			if userIDStr != "" && projectIDStr != "" {
+				// Parse IDs
+				userID, err := strconv.ParseInt(userIDStr, 10, 64)
+				if err != nil {
+					slog.Error("failed to parse user ID", slog.String("user_id", userIDStr), slog.String("error", err.Error()))
+					http.Error(w, "Invalid user ID", http.StatusBadRequest)
+					return
+				}
+
+				projectID, err := strconv.ParseInt(projectIDStr, 10, 64)
+				if err != nil {
+					slog.Error("failed to parse project ID", slog.String("project_id", projectIDStr), slog.String("error", err.Error()))
+					http.Error(w, "Invalid project ID", http.StatusBadRequest)
+					return
+				}
+
+				// Create ProjectInfo and add to context
+				projectInfo := &project.ProjectInfo{
+					ID:     projectID,
+					UserID: userID,
+				}
+
+				ctx := stdcontext.WithValue(r.Context(), appcontext.ProjectKey, projectInfo)
+
+				slog.Debug("request from gateway", 
+					slog.Int64("user_id", userID),
+					slog.Int64("project_id", projectID),
+				)
+
+				next.ServeHTTP(w, r.WithContext(ctx))
 				return
 			}
 
-			// No user ID - this shouldn't happen if accessing through Gateway
-			slog.Warn("no X-User-ID header, might be direct access", slog.String("path", r.URL.Path))
-			// TODO: Add API key validation for direct access
-			next.ServeHTTP(w, r)
+			// No headers - this shouldn't happen if accessing through Gateway
+			slog.Warn("no X-User-ID or X-Project-ID headers", slog.String("path", r.URL.Path))
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		})
 	}
 }

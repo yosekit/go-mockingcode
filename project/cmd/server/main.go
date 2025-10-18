@@ -79,6 +79,7 @@ func main() {
 		cfg.BaseURLFormat,
 	)
 	collectionService := service.NewCollectionService(
+		projectRepo,
 		collectionRepo,
 		cfg.MaxSchemasPerProject,
 	)
@@ -127,7 +128,7 @@ func main() {
 		}
 
 		grpcServer := grpc.NewServer()
-		pb.RegisterProjectServiceServer(grpcServer, projectgrpc.NewProjectGRPCServer(projectService))
+		pb.RegisterProjectServiceServer(grpcServer, projectgrpc.NewProjectGRPCServer(projectService, collectionService))
 
 		slog.Info("gRPC server starting", slog.String("port", grpcPort))
 		if err := grpcServer.Serve(lis); err != nil {

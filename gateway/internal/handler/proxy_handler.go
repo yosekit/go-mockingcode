@@ -22,8 +22,8 @@ func NewProxyHandler(projectClient *client.ProjectClient, dataClient *client.Dat
 
 // HandleProjects proxies requests to project service
 func (h *ProxyHandler) HandleProjects(w http.ResponseWriter, r *http.Request) {
-	// Extract path after /api
-	path := strings.TrimPrefix(r.URL.Path, "/api")
+	// Gateway path: /projects -> Project Service path: /projects
+	path := r.URL.Path
 	
 	slog.Debug("proxying to project service",
 		slog.String("original_path", r.URL.Path),
