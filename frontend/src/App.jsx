@@ -1,63 +1,66 @@
 import { useState } from 'preact/hooks'
-import { motion } from 'framer-motion'
+import { useAuth } from './hooks/useAuth'
+import { Auth } from './components/Auth'
+import { Projects } from './components/Projects'
+import { ProjectDetail } from './components/ProjectDetail'
 
 export function App() {
-  const [count, setCount] = useState(0)
+  const { isAuthenticated, isLoading, login, register, logout } = useAuth();
+  const [selectedProject, setSelectedProject] = useState(null);
+
+  const handleProjectUpdated = (updatedProject) => {
+    setSelectedProject(updatedProject);
+  };
+
+  const handleProjectDeleted = () => {
+    setSelectedProject(null);
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-dark-900 flex items-center justify-center">
+        <div className="text-gray-400">Загрузка...</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Auth onLogin={login} onRegister={register} />;
+  }
 
   return (
-    <div className="min-h-screen bg-dark-900 flex items-center justify-center">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center"
-      >
-        <motion.h1 
-          className="text-4xl font-bold gradient-text mb-8"
-          whileHover={{ scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 300 }}
-        >
-          MockingCode
-        </motion.h1>
+    <div className="min-h-screen bg-dark-900 p-8">
+      <div className="max-w-6xl mx-auto">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <div className="flex items-center gap-4">
+            <h1 className="text-3xl font-bold gradient-text">MockingCode</h1>
+            {selectedProject && (
+              <button
+                onClick={() => setSelectedProject(null)}
+                className="text-gray-400 hover:text-white transition-colors text-sm"
+              >
+                ← Назад к проектам
+              </button>
+            )}
+          </div>
+          <button onClick={logout} className="btn-secondary">
+            Выйти
+          </button>
+        </div>
         
-        <motion.p 
-          className="text-gray-400 text-lg mb-8"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          API Mock Generator
-        </motion.p>
-
-        <motion.div 
-          className="card max-w-md mx-auto"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <h2 className="text-xl font-semibold mb-4">Test Counter</h2>
-          <p className="text-gray-300 mb-4">
-            Current count: <span className="text-primary-400 font-mono">{count}</span>
-          </p>
-          
-          <motion.button
-            onClick={() => setCount(count + 1)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="btn-primary"
-          >
-            Increment
-          </motion.button>
-        </motion.div>
-
-        <motion.div 
-          className="mt-8 text-sm text-gray-500"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.5 }}
-        >
-          <p>✅ Preact + Vite + Tailwind CSS + Framer Motion</p>
-        </motion.div>
-      </motion.div>
+        {/* Content */}
+        {selectedProject ? (
+          <ProjectDetail 
+            project={selectedProject}
+            onBack={() => setSelectedProject(null)}
+            onProjectUpdated={handleProjectUpdated}
+            onProjectDeleted={handleProjectDeleted}
+          />
+        ) : (
+          <Projects onSelectProject={setSelectedProject} />
+        )}
+      </div>
     </div>
-  )
+  );
 }
