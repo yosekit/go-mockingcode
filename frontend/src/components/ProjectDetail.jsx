@@ -1,6 +1,7 @@
 import { useState } from 'preact/hooks';
 import { motion, AnimatePresence } from 'framer-motion';
 import apiClient from '../utils/apiClient';
+import { Collections } from './Collections';
 
 export function ProjectDetail({ project, onBack, onProjectUpdated, onProjectDeleted }) {
     const [isEditing, setIsEditing] = useState(false);
@@ -171,12 +172,7 @@ export function ProjectDetail({ project, onBack, onProjectUpdated, onProjectDele
 
             {/* Коллекции */}
             <div className="card">
-                <h3 className="text-xl font-semibold text-white mb-4">
-                    Коллекции
-                </h3>
-                <p className="text-gray-400">
-                    Здесь будут коллекции проекта...
-                </p>
+                <Collections projectId={project.id} apiKey={project.api_key} />
             </div>
 
             {/* Danger Zone */}

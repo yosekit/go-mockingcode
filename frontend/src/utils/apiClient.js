@@ -117,7 +117,9 @@ class APIClient {
 
     // Collections endpoints
     async getCollections(projectId) {
-        return this.request(`/projects/${projectId}/collections`);
+        const response = await this.request(`/projects/${projectId}/collections`);
+        // Backend возвращает { collections: [...], count: N }
+        return response.collections || [];
     }
 
     async createCollection(projectId, data) {
@@ -136,6 +138,33 @@ class APIClient {
 
     async deleteCollection(projectId, collectionId) {
         return this.request(`/projects/${projectId}/collections/${collectionId}`, {
+            method: 'DELETE',
+        });
+    }
+
+    // Data endpoints (public API с api_key)
+    async getCollectionData(apiKey, collectionName) {
+        const response = await this.request(`/${apiKey}/${collectionName}`);
+        // Backend возвращает { documents: [...], total: N, ... }
+        return response;
+    }
+
+    async createDocument(apiKey, collectionName, data) {
+        return this.request(`/${apiKey}/${collectionName}`, {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async updateDocument(apiKey, collectionName, documentId, data) {
+        return this.request(`/${apiKey}/${collectionName}/${documentId}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteDocument(apiKey, collectionName, documentId) {
+        return this.request(`/${apiKey}/${collectionName}/${documentId}`, {
             method: 'DELETE',
         });
     }
