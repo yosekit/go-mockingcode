@@ -101,8 +101,9 @@ func main() {
 	mux.HandleFunc("/projects/", proxyHandler.HandleProjects)   // GET/PUT/DELETE by api_key, collections
 
 	// Protected routes (JWT-based)
-	protectedHandler := middleware.CORSMiddleware(cfg)(mux)
-	protectedHandler = middleware.AuthMiddleware(authGRPCClient)(protectedHandler)
+	// ВАЖНО: CORS должен быть ПЕРЕД Auth, чтобы preflight и 401 работали корректно
+	protectedHandler := middleware.AuthMiddleware(authGRPCClient)(mux)
+	protectedHandler = middleware.CORSMiddleware(cfg)(protectedHandler)
 
 	// Public Data API routes (protected by API key) - for developers
 	// Pattern: /{api_key}/{collection}[/{id}]
