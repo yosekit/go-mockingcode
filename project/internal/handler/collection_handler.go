@@ -215,8 +215,12 @@ func (h *CollectionHandler) UpdateCollection(w http.ResponseWriter, r *http.Requ
 // @Failure 404 {object} map[string]string
 // @Router /projects/{projectId}/collections/{collectionId} [delete]
 func (h *CollectionHandler) DeleteCollection(w http.ResponseWriter, r *http.Request, projectID, collectionID, userID int64) {
-	// TODO: Implement collection deletion
-	writeSuccessJson(w, http.StatusOK, map[string]string{"message": "Collection deletion not implemented yet"})
+	if err := h.collectionService.DeleteCollection(collectionID, projectID, userID); err != nil {
+		writeErrorJson(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeSuccessJson(w, http.StatusOK, map[string]string{"message": "Collection deleted successfully"})
 }
 
 func extractProjectAndCollectionID(w http.ResponseWriter, r *http.Request) (int64, int64, error) {

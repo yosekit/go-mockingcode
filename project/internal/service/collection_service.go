@@ -146,3 +146,26 @@ func (s *CollectionService) UpdateCollection(collectionID int64, projectID int64
 
 	return collection, nil
 }
+
+// DeleteCollection удаляет коллекцию
+func (s *CollectionService) DeleteCollection(collectionID int64, projectID int64, userID int64) error {
+	// Проверяем что проект принадлежит пользователю
+	project, err := s.projectRepo.GetProjectByID(projectID, userID)
+	if err != nil {
+		return err
+	}
+	if project == nil {
+		return errors.New("project not found")
+	}
+
+	// Проверяем что коллекция существует и принадлежит этому проекту
+	collection, err := s.collectionRepo.GetCollectionByID(collectionID, projectID)
+	if err != nil {
+		return err
+	}
+	if collection == nil {
+		return errors.New("collection not found")
+	}
+
+	return s.collectionRepo.DeleteCollection(collectionID, projectID)
+}

@@ -209,3 +209,23 @@ func (r *CollectionRepository) UpdateCollection(collection *model.Collection) er
 	)
 	return err
 }
+
+// DeleteCollection удаляет коллекцию
+func (r *CollectionRepository) DeleteCollection(collectionID int64, projectID int64) error {
+	query := `DELETE FROM collections WHERE id = $1 AND project_id = $2`
+	result, err := r.db.Exec(query, collectionID, projectID)
+	if err != nil {
+		return fmt.Errorf("failed to delete collection: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to check rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("collection not found")
+	}
+
+	return nil
+}
