@@ -11,6 +11,7 @@ export function CollectionDataEditor({ apiKey, collection, onClose }) {
     const [editingDocument, setEditingDocument] = useState(null);
     const [jsonValue, setJsonValue] = useState('{\n  \n}');
     const [isSaving, setIsSaving] = useState(false);
+    const [isBulkEdit, setIsBulkEdit] = useState(false);
 
     useEffect(() => {
         loadDocuments();
@@ -21,7 +22,8 @@ export function CollectionDataEditor({ apiKey, collection, onClose }) {
             setIsLoading(true);
             setError('');
             const response = await apiClient.getCollectionData(apiKey, collection.name);
-            setDocuments(response.documents || []);
+            // Backend теперь возвращает чистый массив
+            setDocuments(Array.isArray(response) ? response : []);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -31,14 +33,25 @@ export function CollectionDataEditor({ apiKey, collection, onClose }) {
 
     const handleCreate = () => {
         setEditingDocument(null);
+        setIsBulkEdit(false);
         setJsonValue('{\n  "name": "Example",\n  "value": 123\n}');
+        setShowCreateModal(true);
+    };
+
+    const handleBulkEdit = () => {
+        setEditingDocument(null);
+        setIsBulkEdit(true);
+        // Формируем JSON массив всех документов (показываем все как есть)
+        setJsonValue(JSON.stringify(documents, null, 2));
         setShowCreateModal(true);
     };
 
     const handleEdit = (doc) => {
         setEditingDocument(doc);
-        // Показываем только data (без _id, он на верхнем уровне документа)
-        setJsonValue(JSON.stringify(doc.data, null, 2));
+        setIsBulkEdit(false);
+        // Убираем id из редактирования (read-only, автогенерируется)
+        const { id, ...editableData } = doc;
+        setJsonValue(JSON.stringify(editableData, null, 2));
         setShowCreateModal(true);
     };
 
@@ -50,8 +63,26 @@ export function CollectionDataEditor({ apiKey, collection, onClose }) {
             // Парсим JSON
             const data = JSON.parse(jsonValue);
             
-            if (editingDocument) {
-                // Обновление (используем id, не _id - так возвращает backend)
+            if (isBulkEdit) {
+                // Массовое обновление
+                if (!Array.isArray(data)) {
+                    setError('Для массового редактирования нужен массив объектов');
+                    setIsSaving(false);
+                    return;
+                }
+                
+                // Обновляем каждый документ
+                const promises = data.map(doc => {
+                    const { id, ...updateData } = doc;
+                    if (!id) {
+                        throw new Error('Каждый документ должен иметь id');
+                    }
+                    return apiClient.updateDocument(apiKey, collection.name, id, updateData);
+                });
+                
+                await Promise.all(promises);
+            } else if (editingDocument) {
+                // Обновление одного документа
                 await apiClient.updateDocument(apiKey, collection.name, editingDocument.id, data);
             } else {
                 // Создание
@@ -103,6 +134,11 @@ export function CollectionDataEditor({ apiKey, collection, onClose }) {
                     </p>
                 </div>
                 <div className="flex gap-2">
+                    {documents.length > 0 && (
+                        <button onClick={handleBulkEdit} className="btn-secondary">
+                            Редактировать все
+                        </button>
+                    )}
                     <button onClick={handleCreate} className="btn-primary">
                         + Добавить документ
                     </button>
@@ -135,7 +171,7 @@ export function CollectionDataEditor({ apiKey, collection, onClose }) {
                 <div className="space-y-3">
                     {documents.map((doc, index) => (
                         <motion.div
-                            key={doc.id}
+                            key={doc.id || index}
                             initial={{ opacity: 0, y: 10 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
@@ -171,7 +207,7 @@ export function CollectionDataEditor({ apiKey, collection, onClose }) {
                             
                             {/* JSON Preview */}
                             <pre className="bg-dark-900 rounded p-3 text-xs text-gray-300 overflow-x-auto">
-                                {JSON.stringify(doc.data, null, 2)}
+                                {JSON.stringify(doc, null, 2)}
                             </pre>
                         </motion.div>
                     ))}
@@ -196,7 +232,7 @@ export function CollectionDataEditor({ apiKey, collection, onClose }) {
                             onClick={(e) => e.stopPropagation()}
                         >
                             <h3 className="text-xl font-bold text-white mb-4">
-                                {editingDocument ? 'Редактировать документ' : 'Новый документ'}
+                                {isBulkEdit ? 'Массовое редактирование' : (editingDocument ? 'Редактировать документ' : 'Новый документ')}
                             </h3>
 
                             <div className="mb-4">
@@ -221,7 +257,10 @@ export function CollectionDataEditor({ apiKey, collection, onClose }) {
                                     />
                                 </div>
                                 <p className="text-xs text-gray-500 mt-2">
-                                    Введите JSON объект. ID генерируется автоматически.
+                                    {isBulkEdit 
+                                        ? 'Редактируйте массив документов. Поле id не изменяется, изменяются только данные.'
+                                        : 'Введите JSON объект. Поле id генерируется автоматически.'
+                                    }
                                 </p>
                             </div>
 

@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/go-mockingcode/data/internal/model"
@@ -32,6 +33,15 @@ func (r *DocumentRepository) CreateDocument(projectID int64, collectionName stri
 	collection := r.GetCollection(collectionName)
 	ctx := context.Background()
 
+	// Генерируем автоинкрементный ID если его нет в data
+	if _, hasID := data["id"]; !hasID {
+		nextID, err := r.getNextID(projectID, collectionName)
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate ID: %v", err)
+		}
+		data["id"] = nextID
+	}
+
 	doc := &model.MockDocument{
 		ProjectID:      projectID,
 		CollectionName: collectionName,
@@ -47,6 +57,36 @@ func (r *DocumentRepository) CreateDocument(projectID int64, collectionName stri
 
 	doc.ID = result.InsertedID.(bson.ObjectID)
 	return doc, nil
+}
+
+// getNextID получает следующий автоинкрементный ID для коллекции проекта
+func (r *DocumentRepository) getNextID(projectID int64, collectionName string) (int, error) {
+	counterCollection := r.client.Database(r.dbName).Collection("counters")
+	ctx := context.Background()
+
+	filter := bson.M{
+		"project_id":      projectID,
+		"collection_name": collectionName,
+	}
+
+	update := bson.M{
+		"$inc": bson.M{"seq": 1},
+	}
+
+	opts := options.FindOneAndUpdate().
+		SetUpsert(true).
+		SetReturnDocument(options.After)
+
+	var counter struct {
+		Seq int `bson:"seq"`
+	}
+
+	err := counterCollection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&counter)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get next ID: %v", err)
+	}
+
+	return counter.Seq, nil
 }
 
 // GetDocuments возвращает документы коллекции
@@ -104,20 +144,27 @@ func (r *DocumentRepository) GetDocuments(projectID int64, collectionName string
 	}, nil
 }
 
-// GetDocumentByID возвращает документ по ID
+// GetDocumentByID возвращает документ по ID (ищет по data.id)
 func (r *DocumentRepository) GetDocumentByID(projectID int64, collectionName, documentID string) (*model.MockDocument, error) {
 	collection := r.GetCollection(collectionName)
 	ctx := context.Background()
 
-	objID, err := bson.ObjectIDFromHex(documentID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid document ID: %v", err)
+	// Пробуем преобразовать в число
+	var filter bson.M
+	if numID, err := strconv.Atoi(documentID); err == nil {
+		// Числовой ID - ищем по data.id
+		filter = bson.M{"project_id": projectID, "data.id": numID}
+	} else {
+		// Строковый ID - может быть MongoDB ObjectID (для обратной совместимости)
+		objID, err := bson.ObjectIDFromHex(documentID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid document ID: %v", err)
+		}
+		filter = bson.M{"_id": objID, "project_id": projectID}
 	}
 
-	filter := bson.M{"_id": objID, "project_id": projectID}
-
 	var doc model.MockDocument
-	err = collection.FindOne(ctx, filter).Decode(&doc)
+	err := collection.FindOne(ctx, filter).Decode(&doc)
 	if err == mongo.ErrNoDocuments {
 		return nil, nil
 	}
@@ -128,17 +175,27 @@ func (r *DocumentRepository) GetDocumentByID(projectID int64, collectionName, do
 	return &doc, nil
 }
 
-// UpdateDocument обновляет документ
+// UpdateDocument обновляет документ (ищет по data.id)
 func (r *DocumentRepository) UpdateDocument(projectID int64, collectionName, documentID string, data map[string]interface{}) (*model.MockDocument, error) {
 	collection := r.GetCollection(collectionName)
 	ctx := context.Background()
 
-	objID, err := bson.ObjectIDFromHex(documentID)
-	if err != nil {
-		return nil, fmt.Errorf("invalid document ID: %v", err)
+	// Пробуем преобразовать в число
+	var filter bson.M
+	if numID, err := strconv.Atoi(documentID); err == nil {
+		// Числовой ID - ищем по data.id и сохраняем id в data
+		filter = bson.M{"project_id": projectID, "data.id": numID}
+		// Убеждаемся что id не изменяется
+		data["id"] = numID
+	} else {
+		// Строковый ID - может быть MongoDB ObjectID
+		objID, err := bson.ObjectIDFromHex(documentID)
+		if err != nil {
+			return nil, fmt.Errorf("invalid document ID: %v", err)
+		}
+		filter = bson.M{"_id": objID, "project_id": projectID}
 	}
 
-	filter := bson.M{"_id": objID, "project_id": projectID}
 	update := bson.M{
 		"$set": bson.M{
 			"data":       data,
@@ -150,7 +207,7 @@ func (r *DocumentRepository) UpdateDocument(projectID int64, collectionName, doc
 		SetReturnDocument(options.After)
 
 	var doc model.MockDocument
-	err = collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&doc)
+	err := collection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&doc)
 	if err == mongo.ErrNoDocuments {
 		return nil, nil
 	}
@@ -161,17 +218,24 @@ func (r *DocumentRepository) UpdateDocument(projectID int64, collectionName, doc
 	return &doc, nil
 }
 
-// DeleteDocument удаляет документ
+// DeleteDocument удаляет документ (ищет по data.id)
 func (r *DocumentRepository) DeleteDocument(projectID int64, collectionName, documentID string) error {
 	collection := r.GetCollection(collectionName)
 	ctx := context.Background()
 
-	objID, err := bson.ObjectIDFromHex(documentID)
-	if err != nil {
-		return fmt.Errorf("invalid document ID: %v", err)
+	// Пробуем преобразовать в число
+	var filter bson.M
+	if numID, err := strconv.Atoi(documentID); err == nil {
+		// Числовой ID - ищем по data.id
+		filter = bson.M{"project_id": projectID, "data.id": numID}
+	} else {
+		// Строковый ID - может быть MongoDB ObjectID
+		objID, err := bson.ObjectIDFromHex(documentID)
+		if err != nil {
+			return fmt.Errorf("invalid document ID: %v", err)
+		}
+		filter = bson.M{"_id": objID, "project_id": projectID}
 	}
-
-	filter := bson.M{"_id": objID, "project_id": projectID}
 
 	result, err := collection.DeleteOne(ctx, filter)
 	if err != nil {

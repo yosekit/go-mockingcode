@@ -29,6 +29,22 @@ type DocumentsResponse struct {
 	Offset    int64           `json:"offset"`
 }
 
+// CleanDocument - чистый формат документа для публичного API (только data + id)
+type CleanDocument map[string]interface{}
+
+// ToClean преобразует MockDocument в чистый формат (только данные, без MongoDB метаданных)
+func (d *MockDocument) ToClean() CleanDocument {
+	clean := CleanDocument{}
+	// Возвращаем только данные из data (включая автоинкремент id)
+	for k, v := range d.Data {
+		clean[k] = v
+	}
+	return clean
+}
+
+// CleanDocumentsResponse - ответ с чистыми документами для публичного API
+type CleanDocumentsResponse []CleanDocument
+
 // GenerateRequest запрос на генерацию данных
 type GenerateRequest struct {
 	Count *int    `json:"count,omitempty" example:"50"`

@@ -145,7 +145,7 @@ class APIClient {
     // Data endpoints (public API с api_key)
     async getCollectionData(apiKey, collectionName) {
         const response = await this.request(`/${apiKey}/${collectionName}`);
-        // Backend возвращает { documents: [...], total: N, ... }
+        // Backend возвращает чистый массив документов
         return response;
     }
 

@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -86,7 +88,13 @@ func (h *DocumentHandler) GetDocuments(w http.ResponseWriter, r *http.Request, p
 		return
 	}
 
-	writeSuccessJson(w, http.StatusOK, response)
+	// Преобразуем в чистый формат для публичного API
+	cleanDocs := make([]map[string]interface{}, len(response.Documents))
+	for i, doc := range response.Documents {
+		cleanDocs[i] = doc.ToClean()
+	}
+
+	writeOrderedJson(w, http.StatusOK, cleanDocs)
 }
 
 // CreateDocument godoc
@@ -120,7 +128,8 @@ func (h *DocumentHandler) CreateDocument(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	writeSuccessJson(w, http.StatusCreated, model.DocumentResponse{Document: document})
+	// Чистый формат для публичного API
+	writeOrderedJson(w, http.StatusCreated, document.ToClean())
 }
 
 // HandleDocument godoc
@@ -180,7 +189,8 @@ func (h *DocumentHandler) GetDocument(w http.ResponseWriter, r *http.Request, pr
 		return
 	}
 
-	writeSuccessJson(w, http.StatusOK, model.DocumentResponse{Document: document})
+	// Чистый формат для публичного API
+	writeOrderedJson(w, http.StatusOK, document.ToClean())
 }
 
 // UpdateDocument godoc
@@ -216,7 +226,8 @@ func (h *DocumentHandler) UpdateDocument(w http.ResponseWriter, r *http.Request,
 		return
 	}
 
-	writeSuccessJson(w, http.StatusOK, model.DocumentResponse{Document: document})
+	// Чистый формат для публичного API
+	writeOrderedJson(w, http.StatusOK, document.ToClean())
 }
 
 // DeleteDocument godoc
@@ -307,4 +318,69 @@ func writeSuccessJson(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(data)
+}
+
+// writeOrderedJson записывает JSON с гарантированным порядком полей (id первым)
+func writeOrderedJson(w http.ResponseWriter, statusCode int, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	
+	// Для массива или одного документа формируем упорядоченный JSON
+	var buf bytes.Buffer
+	
+	switch v := data.(type) {
+	case []map[string]interface{}:
+		// Массив документов
+		buf.WriteString("[")
+		for i, doc := range v {
+			if i > 0 {
+				buf.WriteString(",")
+			}
+			buf.Write(orderDocument(doc))
+		}
+		buf.WriteString("]")
+	case map[string]interface{}:
+		// Один документ
+		buf.Write(orderDocument(v))
+	default:
+		// Fallback на обычный JSON
+		json.NewEncoder(w).Encode(data)
+		return
+	}
+	
+	w.Write(buf.Bytes())
+}
+
+// orderDocument упорядочивает поля документа (id первым, остальные в алфавитном порядке)
+func orderDocument(doc map[string]interface{}) []byte {
+	// Собираем ключи
+	keys := make([]string, 0, len(doc))
+	for k := range doc {
+		keys = append(keys, k)
+	}
+	
+	// Сортируем с приоритетом для id
+	sort.Slice(keys, func(i, j int) bool {
+		if keys[i] == "id" {
+			return true
+		}
+		if keys[j] == "id" {
+			return false
+		}
+		return keys[i] < keys[j]
+	})
+	
+	// Строим JSON вручную
+	result := "{"
+	for i, k := range keys {
+		if i > 0 {
+			result += ","
+		}
+		result += fmt.Sprintf(`"%s":`, k)
+		valueJSON, _ := json.Marshal(doc[k])
+		result += string(valueJSON)
+	}
+	result += "}"
+	
+	return []byte(result)
 }
