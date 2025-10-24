@@ -60,3 +60,7 @@ Thumbs.db
 
 # Development
 /dev/
+
+# Air hot reload temporary files
+tmp/
+**/tmp/
