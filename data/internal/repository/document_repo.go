@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"time"
 
@@ -218,6 +219,41 @@ func (r *DocumentRepository) UpdateDocument(projectID int64, collectionName, doc
 	return &doc, nil
 }
 
+// ResetCounter сбрасывает автоинкрементный счетчик для коллекции проекта
+func (r *DocumentRepository) ResetCounter(projectID int64, collectionName string) error {
+	counterCollection := r.client.Database(r.dbName).Collection("counters")
+	ctx := context.Background()
+
+	filter := bson.M{
+		"project_id":      projectID,
+		"collection_name": collectionName,
+	}
+
+	// Просто устанавливаем seq в 0
+	update := bson.M{
+		"$set": bson.M{"seq": 0},
+	}
+
+	opts := options.FindOneAndUpdate().
+		SetUpsert(true).
+		SetReturnDocument(options.After)
+
+	var result struct {
+		Seq int `bson:"seq"`
+	}
+
+	err := counterCollection.FindOneAndUpdate(ctx, filter, update, opts).Decode(&result)
+	if err != nil {
+		return fmt.Errorf("failed to reset counter: %v", err)
+	}
+
+	slog.Info("Successfully reset counter", 
+		slog.Int64("project_id", projectID), 
+		slog.String("collection", collectionName), 
+		slog.Int("seq", result.Seq))
+	return nil
+}
+
 // DeleteDocument удаляет документ (ищет по data.id)
 func (r *DocumentRepository) DeleteDocument(projectID int64, collectionName, documentID string) error {
 	collection := r.GetCollection(collectionName)
@@ -246,6 +282,22 @@ func (r *DocumentRepository) DeleteDocument(projectID int64, collectionName, doc
 		return fmt.Errorf("document not found")
 	}
 
+	// Проверяем, стала ли коллекция пустой после удаления
+	count, err := r.CountDocuments(projectID, collectionName)
+	if err != nil {
+		return fmt.Errorf("failed to count documents after deletion: %v", err)
+	}
+
+	// Если коллекция стала пустой, сбрасываем счетчик
+	if count == 0 {
+		if err := r.ResetCounter(projectID, collectionName); err != nil {
+			// Логируем ошибку, но не прерываем операцию удаления
+			slog.Warn("Failed to reset counter", 
+				slog.String("collection", collectionName), 
+				slog.String("error", err.Error()))
+		}
+	}
+
 	return nil
 }
 
@@ -259,6 +311,23 @@ func (r *DocumentRepository) DeleteAllDocuments(projectID int64, collectionName 
 	result, err := collection.DeleteMany(ctx, filter)
 	if err != nil {
 		return 0, fmt.Errorf("failed to delete documents: %v", err)
+	}
+
+	// Если удалили документы, сбрасываем счетчик
+	if result.DeletedCount > 0 {
+		slog.Info("Deleted documents, resetting counter", 
+			slog.Int64("deleted_count", result.DeletedCount), 
+			slog.String("collection", collectionName), 
+			slog.Int64("project_id", projectID))
+		if err := r.ResetCounter(projectID, collectionName); err != nil {
+			// Логируем ошибку, но не прерываем операцию удаления
+			slog.Warn("Failed to reset counter", 
+				slog.String("collection", collectionName), 
+				slog.String("error", err.Error()))
+		} else {
+			slog.Info("Successfully reset counter", 
+				slog.String("collection", collectionName))
+		}
 	}
 
 	return result.DeletedCount, nil

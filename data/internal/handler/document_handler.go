@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"sort"
 	"strconv"
@@ -59,6 +60,8 @@ func (h *DocumentHandler) HandleCollection(w http.ResponseWriter, r *http.Reques
 		h.GetDocuments(w, r, project, collectionName)
 	case http.MethodPost:
 		h.CreateDocument(w, r, project, collectionName)
+	case http.MethodDelete:
+		h.FlushCollection(w, r, project, collectionName)
 	}
 }
 
@@ -250,6 +253,30 @@ func (h *DocumentHandler) DeleteDocument(w http.ResponseWriter, r *http.Request,
 	}
 
 	writeSuccessJson(w, http.StatusOK, map[string]string{"message": "Document deleted successfully"})
+}
+
+// FlushCollection godoc
+// @Summary Flush collection
+// @Description Delete all documents from collection
+// @Tags documents
+// @Produce json
+// @Param api_key path string true "API Key"
+// @Param collection path string true "Collection Name"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /{api_key}/{collection} [delete]
+func (h *DocumentHandler) FlushCollection(w http.ResponseWriter, r *http.Request, project *project.ProjectInfo, collectionName string) {
+	deletedCount, err := h.docService.FlushCollection(project.ID, collectionName)
+	if err != nil {
+		writeErrorJson(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	writeSuccessJson(w, http.StatusOK, map[string]interface{}{
+		"message":       "Collection flushed successfully",
+		"deleted_count": deletedCount,
+	})
 }
 
 func extractProjectAndCollection(w http.ResponseWriter, r *http.Request) (*project.ProjectInfo, string, error) {

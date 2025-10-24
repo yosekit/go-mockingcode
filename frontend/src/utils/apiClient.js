@@ -168,6 +168,12 @@ class APIClient {
             method: 'DELETE',
         });
     }
+
+    async flushCollection(apiKey, collectionName) {
+        return this.request(`/${apiKey}/${collectionName}`, {
+            method: 'DELETE',
+        });
+    }
 }
 
 export default new APIClient();

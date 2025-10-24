@@ -63,6 +63,11 @@ func (s *DocumentService) FlushCollection(projectID int64, collectionName string
 	return s.docRepo.DeleteAllDocuments(projectID, collectionName)
 }
 
+// ResetCounter сбрасывает автоинкрементный счетчик для коллекции
+func (s *DocumentService) ResetCounter(projectID int64, collectionName string) error {
+	return s.docRepo.ResetCounter(projectID, collectionName)
+}
+
 // GenerateDocuments генерирует данные по шаблону коллекции
 func (s *DocumentService) GenerateDocuments(projectID int64, collection *models.Collection, req *model.GenerateRequest) ([]*model.MockDocument, error) {
 	if len(collection.Fields) == 0 {

@@ -12,6 +12,7 @@ export function Collections({ projectId, apiKey }) {
     const [newCollectionDescription, setNewCollectionDescription] = useState('');
     const [isCreating, setIsCreating] = useState(false);
     const [selectedCollection, setSelectedCollection] = useState(null);
+    const [documentCounts, setDocumentCounts] = useState({});
 
     useEffect(() => {
         loadCollections();
@@ -22,11 +23,32 @@ export function Collections({ projectId, apiKey }) {
             setIsLoading(true);
             const data = await apiClient.getCollections(projectId);
             setCollections(data || []);
+            
+            // Загружаем количество документов для каждой коллекции
+            if (data && data.length > 0) {
+                loadDocumentCounts(data);
+            }
         } catch (err) {
             setError(err.message);
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const loadDocumentCounts = async (collections) => {
+        const counts = {};
+        
+        for (const collection of collections) {
+            try {
+                const documents = await apiClient.getCollectionData(apiKey, collection.name);
+                counts[collection.id] = Array.isArray(documents) ? documents.length : 0;
+            } catch (err) {
+                // Если коллекция пустая или ошибка - считаем 0
+                counts[collection.id] = 0;
+            }
+        }
+        
+        setDocumentCounts(counts);
     };
 
     const handleCreateCollection = async (e) => {
@@ -48,6 +70,7 @@ export function Collections({ projectId, apiKey }) {
                 ],
             });
             setCollections([...collections, collection]);
+            setDocumentCounts({...documentCounts, [collection.id]: 0});
             setNewCollectionName('');
             setNewCollectionDescription('');
             setShowCreateModal(false);
@@ -64,10 +87,16 @@ export function Collections({ projectId, apiKey }) {
         try {
             await apiClient.deleteCollection(projectId, collectionId);
             setCollections(collections.filter(c => c.id !== collectionId));
+            
+            // Удаляем счетчик документов для удаленной коллекции
+            const newCounts = { ...documentCounts };
+            delete newCounts[collectionId];
+            setDocumentCounts(newCounts);
         } catch (err) {
             setError(err.message);
         }
     };
+
 
     if (isLoading) {
         return (
@@ -83,7 +112,12 @@ export function Collections({ projectId, apiKey }) {
             <CollectionDataEditor
                 apiKey={apiKey}
                 collection={selectedCollection}
-                onClose={() => setSelectedCollection(null)}
+                projectId={projectId}
+                onClose={() => {
+                    setSelectedCollection(null);
+                    // Обновляем счетчики документов при возврате
+                    loadDocumentCounts(collections);
+                }}
             />
         );
     }
@@ -176,7 +210,7 @@ export function Collections({ projectId, apiKey }) {
                                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                             </svg>
-                                            <span>0 записей</span>
+                                            <span>{documentCounts[collection.id] || 0} {documentCounts[collection.id] === 1 ? 'документ' : 'документов'}</span>
                                         </div>
                                         
                                         {collection.schema && (
@@ -201,7 +235,10 @@ export function Collections({ projectId, apiKey }) {
                                         Данные
                                     </button>
                                     <button
-                                        onClick={() => handleDeleteCollection(collection.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteCollection(collection.id);
+                                        }}
                                         className="p-2 text-gray-400 hover:text-red-400 transition-colors"
                                         title="Удалить коллекцию"
                                     >
