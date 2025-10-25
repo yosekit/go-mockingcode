@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
 	"sort"
 	"strconv"
@@ -287,12 +286,20 @@ func extractProjectAndCollection(w http.ResponseWriter, r *http.Request) (*proje
 	}
 
 	pathParts := strings.Split(r.URL.Path, "/")
-	if len(pathParts) < 2 {
+	
+	// Определяем, откуда пришел запрос - от gateway или напрямую
+	var collectionName string
+	if len(pathParts) == 2 {
+		// /{collection} - от gateway
+		collectionName = pathParts[1]
+	} else if len(pathParts) >= 3 {
+		// /{api_key}/{collection} или /{api_key}/{collection}/... - напрямую
+		collectionName = pathParts[2]
+	} else {
 		writeErrorJson(w, http.StatusBadRequest, "Invalid collection name")
 		return nil, "", fmt.Errorf("invalid collection name")
 	}
 
-	collectionName := pathParts[1]
 	if collectionName == "" {
 		writeErrorJson(w, http.StatusBadRequest, "Collection name is required")
 		return nil, "", fmt.Errorf("collection name is required")
@@ -303,8 +310,14 @@ func extractProjectAndCollection(w http.ResponseWriter, r *http.Request) (*proje
 
 func extractDocumentID(r *http.Request) string {
 	pathParts := strings.Split(r.URL.Path, "/")
-	if len(pathParts) >= 3 {
+	
+	// Определяем, откуда пришел запрос - от gateway или напрямую
+	if len(pathParts) == 3 {
+		// /{collection}/{id} - от gateway
 		return pathParts[2]
+	} else if len(pathParts) >= 4 {
+		// /{api_key}/{collection}/{id} - напрямую
+		return pathParts[3]
 	}
 	return ""
 }

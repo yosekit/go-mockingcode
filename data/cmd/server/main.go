@@ -65,12 +65,14 @@ func main() {
 
 	// Init Handlers
 	docHandler := handler.NewDocumentHandler(docService)
+	generatorHandler := handler.NewGeneratorHandler()
 
 	// Route Settings
 	mux := http.NewServeMux()
 
 	// Public Handlers
 	mux.HandleFunc("/health", healthHandler)
+	mux.HandleFunc("/generate", generatorHandler.HandleGenerate)
 
 	mux.Handle("/", docHandler)
 

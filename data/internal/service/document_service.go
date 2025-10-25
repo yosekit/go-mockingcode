@@ -3,6 +3,7 @@ package service
 import (
 	"errors"
 	"fmt"
+	"log/slog"
 
 	"github.com/go-mockingcode/data/internal/model"
 	"github.com/go-mockingcode/data/internal/repository"
@@ -103,12 +104,18 @@ func (s *DocumentService) GenerateDocuments(projectID int64, collection *models.
 
 	// Сохраняем в БД
 	var documents []*model.MockDocument
-	for _, data := range generatedData {
+	for i, data := range generatedData {
 		doc, err := s.docRepo.CreateDocument(projectID, collection.Name, data)
 		if err != nil {
 			return nil, err
 		}
 		documents = append(documents, doc)
+		slog.Info("Generated document", 
+			slog.Int64("project_id", projectID),
+			slog.String("collection", collection.Name),
+			slog.Int("index", i),
+			slog.String("doc_id", doc.ID.Hex()),
+		)
 	}
 
 	return documents, nil

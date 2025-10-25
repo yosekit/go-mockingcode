@@ -5,7 +5,7 @@ import apiClient from '../utils/apiClient';
 import { SchemaEditor } from './SchemaEditor';
 import { generateDefaultDocument, formatDocumentAsJson } from '../utils/schemaDefaults';
 
-export function CollectionDataEditor({ apiKey, collection, onClose, projectId }) {
+export function CollectionDataEditor({ apiKey, collection, onClose, projectId, onDataUpdate }) {
     const [documents, setDocuments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -28,7 +28,16 @@ export function CollectionDataEditor({ apiKey, collection, onClose, projectId })
             setError('');
             const response = await apiClient.getCollectionData(apiKey, currentCollection.name);
             // Backend теперь возвращает чистый массив
-            setDocuments(Array.isArray(response) ? response : []);
+            const docs = Array.isArray(response) ? response : [];
+            
+            // Сортируем документы по ID по возрастанию
+            const sortedDocs = docs.sort((a, b) => {
+                const idA = parseInt(a.id) || 0;
+                const idB = parseInt(b.id) || 0;
+                return idA - idB;
+            });
+            
+            setDocuments(sortedDocs);
         } catch (err) {
             setError(err.message);
         } finally {
@@ -111,6 +120,11 @@ export function CollectionDataEditor({ apiKey, collection, onClose, projectId })
             
             setShowCreateModal(false);
             loadDocuments();
+            
+            // Уведомляем родительский компонент об обновлении данных
+            if (onDataUpdate) {
+                onDataUpdate();
+            }
         } catch (err) {
             if (err instanceof SyntaxError) {
                 setError('Неверный JSON формат');
@@ -127,6 +141,11 @@ export function CollectionDataEditor({ apiKey, collection, onClose, projectId })
             await apiClient.flushCollection(apiKey, currentCollection.name);
             loadDocuments();
             setShowFlushConfirm(false);
+            
+            // Уведомляем родительский компонент об обновлении данных
+            if (onDataUpdate) {
+                onDataUpdate();
+            }
         } catch (err) {
             setError(err.message);
         }
@@ -138,6 +157,15 @@ export function CollectionDataEditor({ apiKey, collection, onClose, projectId })
                 fields: fields,
             });
             setCurrentCollection({ ...currentCollection, fields: updated.fields });
+            
+            // Обновляем документы после изменения схемы
+            loadDocuments();
+            
+            // Уведомляем родительский компонент об обновлении данных
+            if (onDataUpdate) {
+                onDataUpdate();
+            }
+            
             if (shouldClose) {
                 setShowSchemaEditor(false);
             }
@@ -257,7 +285,18 @@ export function CollectionDataEditor({ apiKey, collection, onClose, projectId })
                                         </svg>
                                     </button>
                                     <button
-                                        onClick={() => handleDelete(doc)}
+                                        onClick={async () => {
+                                            try {
+                                                await apiClient.deleteDocument(apiKey, currentCollection.name, doc.id);
+                                                loadDocuments();
+                                                // Уведомляем родительский компонент об обновлении данных
+                                                if (onDataUpdate) {
+                                                    onDataUpdate();
+                                                }
+                                            } catch (err) {
+                                                setError(err.message);
+                                            }
+                                        }}
                                         className="text-gray-400 hover:text-red-400 transition-colors"
                                         title="Удалить"
                                     >
@@ -360,6 +399,7 @@ export function CollectionDataEditor({ apiKey, collection, onClose, projectId })
                 {showSchemaEditor && (
                     <SchemaEditor
                         collection={currentCollection}
+                        apiKey={apiKey}
                         onSave={handleSaveSchema}
                         onCancel={() => setShowSchemaEditor(false)}
                     />

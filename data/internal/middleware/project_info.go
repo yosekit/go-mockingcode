@@ -72,6 +72,7 @@ func isPublicEndpoint(path string) bool {
 	publicPaths := []string{
 		"/health",
 		"/swagger",
+		"/generate",
 	}
 
 	for _, publicPath := range publicPaths {

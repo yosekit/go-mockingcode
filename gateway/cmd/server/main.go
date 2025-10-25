@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"log"
 	"log/slog"
 	"net/http"
@@ -113,6 +114,56 @@ func main() {
 
 	// Main router with intelligent routing
 	mainMux := http.NewServeMux()
+	
+	// Public generator endpoint (no auth required, with CORS)
+	mainMux.HandleFunc("/generate", func(w http.ResponseWriter, r *http.Request) {
+		// Handle CORS preflight
+		if r.Method == http.MethodOptions {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		
+		// Proxy directly to data service
+		path := "/generate"
+		if r.URL.RawQuery != "" {
+			path += "?" + r.URL.RawQuery
+		}
+		
+		resp, err := dataClient.ProxyRequest(r, path)
+		if err != nil {
+			slog.Error("failed to proxy generate request", slog.String("error", err.Error()))
+			http.Error(w, "Failed to reach data service", http.StatusBadGateway)
+			return
+		}
+		defer resp.Body.Close()
+		
+		// Add CORS headers to response (only once)
+		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+		
+		// Copy response without CORS headers to avoid duplication
+		// Copy non-CORS headers
+		for key, values := range resp.Header {
+			if !strings.HasPrefix(strings.ToLower(key), "access-control-") {
+				for _, value := range values {
+					w.Header().Add(key, value)
+				}
+			}
+		}
+		
+		// Copy status code
+		w.WriteHeader(resp.StatusCode)
+		
+		// Copy body
+		if _, err := io.Copy(w, resp.Body); err != nil {
+			slog.Error("failed to copy response body", slog.String("error", err.Error()))
+		}
+	})
+	
 	mainMux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		// Check if this is a public API request (starts with api_key pattern: 16 hex chars)
 		// Pattern: /{api_key}/{collection}

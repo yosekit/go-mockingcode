@@ -118,6 +118,10 @@ export function Collections({ projectId, apiKey }) {
                     // Обновляем счетчики документов при возврате
                     loadDocumentCounts(collections);
                 }}
+                onDataUpdate={() => {
+                    // Обновляем счетчики документов после изменения данных
+                    loadDocumentCounts(collections);
+                }}
             />
         );
     }

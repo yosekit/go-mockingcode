@@ -174,6 +174,22 @@ class APIClient {
             method: 'DELETE',
         });
     }
+
+    async generateDocuments(fields, count = 10, seed = null) {
+        const body = {
+            fields: fields,
+            count: count
+        };
+
+        if (seed !== null) {
+            body.seed = seed;
+        }
+
+        return this.request('/generate', {
+            method: 'POST',
+            body: JSON.stringify(body),
+        });
+    }
 }
 
 export default new APIClient();

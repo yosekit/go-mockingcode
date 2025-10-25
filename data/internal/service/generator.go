@@ -34,6 +34,10 @@ func (g *DataGenerator) GenerateDocument(fields []models.FieldTemplate) map[stri
 	doc := make(map[string]interface{})
 
 	for _, field := range fields {
+		// Пропускаем поле id - оно генерируется автоматически при сохранении
+		if field.Name == "id" {
+			continue
+		}
 		doc[field.Name] = g.generateField(field)
 	}
 

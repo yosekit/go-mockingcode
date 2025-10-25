@@ -1,5 +1,6 @@
 import { useState } from 'preact/hooks';
 import { motion, AnimatePresence } from 'framer-motion';
+import apiClient from '../utils/apiClient';
 
 // Доступные типы Faker
 const FAKER_TYPES = [
@@ -27,7 +28,7 @@ const FAKER_FORMATS = {
     date: [],
 };
 
-export function SchemaEditor({ collection, onSave, onCancel }) {
+export function SchemaEditor({ collection, apiKey, onSave, onCancel }) {
     // Инициализируем поля, убеждаясь что id всегда readOnly
     const initFields = () => {
         const existingFields = collection.fields || [];
@@ -102,8 +103,34 @@ export function SchemaEditor({ collection, onSave, onCancel }) {
         try {
             setIsSaving(true);
             setError('');
-            // TODO: вызов API для генерации
-            alert(`Генерация ${generateCount} документов...`);
+            
+            // Генерируем данные
+            const response = await apiClient.generateDocuments(
+                fields, 
+                generateCount
+            );
+            
+            // Сохраняем каждый документ через обычный API
+            let savedCount = 0;
+            for (const doc of response.documents) {
+                try {
+                    await apiClient.createDocument(apiKey, collection.name, doc);
+                    savedCount++;
+                } catch (err) {
+                    console.error('Failed to save document:', err);
+                }
+            }
+            
+            // Показываем результат
+            alert(`Сгенерировано ${response.count} документов, сохранено ${savedCount}!`);
+            
+            // Вызываем callback для обновления данных в родительском компоненте
+            if (onSave) {
+                onSave();
+            }
+            
+            // Закрываем окно
+            onCancel();
         } catch (err) {
             setError(err.message);
         } finally {
