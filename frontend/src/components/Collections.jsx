@@ -198,15 +198,21 @@ export function Collections({ projectId, apiKey }) {
                                 <div className="flex-1">
                                     <div className="flex items-center gap-3 mb-2">
                                         <h4 className="text-lg font-semibold text-white">
-                                            {collection.name}
+                                            /{collection.name}
                                         </h4>
-                                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                                            collection.is_active 
-                                                ? 'bg-green-900/30 text-green-400 border border-green-800' 
-                                                : 'bg-gray-900/30 text-gray-400 border border-gray-800'
-                                        }`}>
-                                            {collection.is_active ? 'Активна' : 'Неактивна'}
-                                        </span>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                const apiUrl = `http://localhost:8080/${apiKey}/${collection.name}`;
+                                                window.open(apiUrl, '_blank');
+                                            }}
+                                            className="p-1.5 text-gray-400 hover:text-blue-400 transition-all duration-200 hover:scale-110"
+                                            title="Открыть API коллекции"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                            </svg>
+                                        </button>
                                     </div>
                                     
                                     {collection.description && (
@@ -216,21 +222,31 @@ export function Collections({ projectId, apiKey }) {
                                     )}
 
                                     <div className="flex items-center gap-4 text-xs text-gray-500">
-                                        <div className="flex items-center gap-1">
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                            </svg>
-                                            <span>{documentCounts[collection.id] || 0} {documentCounts[collection.id] === 1 ? 'документ' : 'документов'}</span>
-                                        </div>
-                                        
-                                        {collection.schema && (
+                                        <div className="flex items-center gap-4">
                                             <div className="flex items-center gap-1">
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                                                 </svg>
-                                                <span>Схема определена</span>
+                                                <span>{documentCounts[collection.id] || 0} {documentCounts[collection.id] === 1 ? 'документ' : 'документов'}</span>
                                             </div>
-                                        )}
+                                            
+                                            {collection.schema && (
+                                                <div className="flex items-center gap-1">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                    </svg>
+                                                    <span>Схема определена</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                                            collection.is_active 
+                                                ? 'bg-green-900/30 text-green-400 border border-green-800' 
+                                                : 'bg-gray-900/30 text-gray-400 border border-gray-800'
+                                        }`}>
+                                            {collection.is_active ? 'Активна' : 'Неактивна'}
+                                        </span>
                                     </div>
                                 </div>
 

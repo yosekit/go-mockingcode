@@ -51,7 +51,7 @@ export function ProjectDetail({ project, onBack, onProjectUpdated, onProjectDele
         // TODO: показать toast уведомление
     };
 
-    const apiUrl = project.base_url || `http://localhost:8080/${project.api_key}`;
+    const apiUrl = `http://localhost:8080/${project.api_key}`;
 
     return (
         <div className="space-y-6">
@@ -137,7 +137,7 @@ export function ProjectDetail({ project, onBack, onProjectUpdated, onProjectDele
 
                                 {/* API URL */}
                                 <div className="space-y-2">
-                                    <span className="text-gray-400 text-sm block">API URL проекта:</span>
+                                    <span className="text-gray-400 text-sm block">API-адрес проекта</span>
                                     <div className="flex items-center gap-2 bg-dark-900 rounded-lg px-3 py-2.5">
                                         <code className="text-primary-400 font-mono text-sm flex-1">
                                             {apiUrl}
