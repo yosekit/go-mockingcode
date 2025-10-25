@@ -5,7 +5,7 @@ import apiClient from '../utils/apiClient';
 import { SchemaEditor } from './SchemaEditor';
 import { generateDefaultDocument, formatDocumentAsJson } from '../utils/schemaDefaults';
 
-export function CollectionDataEditor({ apiKey, collection, onClose, projectId, onDataUpdate }) {
+export function CollectionDataEditor({ apiKey, collection, onClose, projectId, onDataUpdate, limits }) {
     const [documents, setDocuments] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -17,6 +17,12 @@ export function CollectionDataEditor({ apiKey, collection, onClose, projectId, o
     const [showSchemaEditor, setShowSchemaEditor] = useState(false);
     const [showFlushConfirm, setShowFlushConfirm] = useState(false);
     const [currentCollection, setCurrentCollection] = useState(collection);
+
+    // Используем лимиты из пропсов или дефолтные значения
+    const effectiveLimits = limits || {
+        max_collections_per_project: 20,
+        max_documents_per_collection: 500
+    };
 
     useEffect(() => {
         loadDocuments();
@@ -201,9 +207,17 @@ export function CollectionDataEditor({ apiKey, collection, onClose, projectId, o
                     </button>
                 </div>
                 <div className="flex items-center gap-3">
-                    <p className="text-gray-400 text-sm">
-                        {documents.length} {documents.length === 1 ? 'документ' : 'документов'}
-                    </p>
+                    <div className="flex items-center gap-3">
+                        <div className="w-16 h-1 rounded-md bg-gray-700">
+                            <div 
+                                style={{ width: `${Math.min(documents.length / effectiveLimits.max_documents_per_collection * 100, 100)}%` }}
+                                className="h-full bg-lime-500 rounded-md transition-all duration-300"
+                            ></div>
+                        </div>
+                        <p className="text-sm text-gray-500">
+                            {documents.length} / {effectiveLimits.max_documents_per_collection || 'undefined'}
+                        </p>
+                    </div>
                     <button
                         onClick={() => setShowSchemaEditor(true)}
                         className="px-4 py-2 border border-white rounded-lg text-white font-medium hover:bg-white hover:text-dark-900 transition-all"

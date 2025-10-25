@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/go-mockingcode/project/internal/config"
 	"github.com/go-mockingcode/project/internal/middleware"
 	"github.com/go-mockingcode/project/internal/model"
 	"github.com/go-mockingcode/project/internal/service"
@@ -14,11 +15,13 @@ import (
 
 type ProjectHandler struct {
 	projectService *service.ProjectService
+	config         *config.Config
 }
 
-func NewProjectHandler(projectService *service.ProjectService) *ProjectHandler {
+func NewProjectHandler(projectService *service.ProjectService, config *config.Config) *ProjectHandler {
 	return &ProjectHandler{
 		projectService: projectService,
+		config:         config,
 	}
 }
 
@@ -60,6 +63,10 @@ func (h *ProjectHandler) GetUserProjects(w http.ResponseWriter, r *http.Request,
 	writeSuccessJson(w, http.StatusOK, map[string]any{
 		"projects": projects,
 		"count":    len(projects),
+		"limits": map[string]int{
+			"max_collections_per_project": h.config.MaxCollectionsPerProject,
+			"max_documents_per_collection": h.config.MaxDocumentsPerCollection,
+		},
 	})
 }
 

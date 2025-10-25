@@ -85,7 +85,7 @@ func main() {
 	)
 
 	// Init Handlers
-	projectHandler := handler.NewProjectHandler(projectService)
+	projectHandler := handler.NewProjectHandler(projectService, cfg)
 	collectionHandler := handler.NewCollectionHandler(projectService, collectionService)
 	apiKeyHandler := handler.NewAPIKeyHandler(projectService)
 

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import apiClient from '../utils/apiClient';
 import { CollectionDataEditor } from './CollectionDataEditor';
 
-export function Collections({ projectId, apiKey }) {
+export function Collections({ projectId, apiKey, limits }) {
     const [collections, setCollections] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
@@ -13,6 +13,12 @@ export function Collections({ projectId, apiKey }) {
     const [isCreating, setIsCreating] = useState(false);
     const [selectedCollection, setSelectedCollection] = useState(null);
     const [documentCounts, setDocumentCounts] = useState({});
+
+    // Используем лимиты из пропсов или дефолтные значения
+    const effectiveLimits = limits || {
+        max_collections_per_project: 20,
+        max_documents_per_collection: 500
+    };
 
     useEffect(() => {
         loadCollections();
@@ -57,6 +63,12 @@ export function Collections({ projectId, apiKey }) {
     const handleCreateCollection = async (e) => {
         e.preventDefault();
         if (!newCollectionName.trim()) return;
+
+        // Проверяем лимит коллекций
+        if (collections.length >= effectiveLimits.max_collections_per_project) {
+            setError(`Достигнут лимит коллекций: ${effectiveLimits.max_collections_per_project}`);
+            return;
+        }
 
         try {
             setIsCreating(true);
@@ -119,6 +131,7 @@ export function Collections({ projectId, apiKey }) {
                 apiKey={apiKey}
                 collection={selectedCollection}
                 projectId={projectId}
+                limits={effectiveLimits}
                 onClose={() => {
                     setSelectedCollection(null);
                     // Обновляем счетчики документов при возврате
@@ -140,13 +153,17 @@ export function Collections({ projectId, apiKey }) {
                     <h3 className="text-xl font-semibold text-white">Коллекции</h3>
                     <p className="text-gray-400 text-sm mt-1">
                         Создавайте коллекции для хранения mock данных
+                        <span className="text-gray-500 ml-2">
+                            ({collections.length}/{effectiveLimits.max_collections_per_project})
+                        </span>
                     </p>
                 </div>
                 <motion.button
                     onClick={() => setShowCreateModal(true)}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    className="btn-primary"
+                    whileHover={{ scale: collections.length < effectiveLimits.max_collections_per_project ? 1.05 : 1 }}
+                    whileTap={{ scale: collections.length < effectiveLimits.max_collections_per_project ? 0.95 : 1 }}
+                    className={`btn-primary ${collections.length >= effectiveLimits.max_collections_per_project ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    disabled={collections.length >= effectiveLimits.max_collections_per_project}
                 >
                     + Новая коллекция
                 </motion.button>
@@ -223,11 +240,16 @@ export function Collections({ projectId, apiKey }) {
 
                                     <div className="flex items-center gap-4 text-xs text-gray-500">
                                         <div className="flex items-center gap-4">
-                                            <div className="flex items-center gap-1">
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                                </svg>
-                                                <span>{documentCounts[collection.id] || 0} {documentCounts[collection.id] === 1 ? 'документ' : 'документов'}</span>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-16 h-1 rounded-md bg-gray-700">
+                                                <div 
+                                                    style={{ width: `${Math.min((documentCounts[collection.id] || 0) / effectiveLimits.max_documents_per_collection * 100, 100)}%` }}
+                                                    className="h-full bg-lime-500 rounded-md transition-all duration-300"
+                                                ></div>
+                                            </div>
+                                            <span className="text-gray-500">
+                                                {documentCounts[collection.id] || 0} / {effectiveLimits.max_documents_per_collection || 'undefined'}
+                                            </span>
                                             </div>
                                             
                                             {collection.schema && (

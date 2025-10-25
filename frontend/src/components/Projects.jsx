@@ -4,6 +4,10 @@ import apiClient from '../utils/apiClient';
 
 export function Projects({ onSelectProject }) {
     const [projects, setProjects] = useState([]);
+    const [limits, setLimits] = useState({
+        max_collections_per_project: 20,
+        max_documents_per_collection: 500
+    });
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState('');
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -17,8 +21,13 @@ export function Projects({ onSelectProject }) {
     const loadProjects = async () => {
         try {
             setIsLoading(true);
-            const data = await apiClient.getProjects();
-            setProjects(data || []);
+            const response = await apiClient.getProjects();
+            setProjects(response.projects || []);
+            
+            // Получаем лимиты из метаданных
+            if (response.limits) {
+                setLimits(response.limits);
+            }
         } catch (err) {
             // Не показываем ошибку 401 - она обрабатывается глобально
             if (err.message && !err.message.includes('HTTP 401')) {
@@ -127,7 +136,7 @@ export function Projects({ onSelectProject }) {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: index * 0.05 }}
                             className="card hover:border-primary-600 transition-colors cursor-pointer"
-                            onClick={() => onSelectProject(project)}
+                            onClick={() => onSelectProject({...project, limits})}
                         >
                             <h3 className="text-lg font-semibold text-white mb-3">
                                 {project.name}
@@ -157,9 +166,17 @@ export function Projects({ onSelectProject }) {
                                 
                                 <div className="flex items-center justify-between pt-2 border-t border-dark-600">
                                     <span className="text-gray-400">Коллекций:</span>
-                                    <span className="text-white font-medium">
-                                        {project.collections_count || 0}
-                                    </span>
+                                    <div className="flex items-center space-x-3">
+                                        <div className="w-20 h-1 rounded-md bg-gray-700">
+                                            <div 
+                                                style={{ width: `${Math.min((project.collections_count || 0) / limits.max_collections_per_project * 100, 100)}%` }}
+                                                className="h-full bg-lime-500 rounded-md transition-all duration-300"
+                                            ></div>
+                                        </div>
+                                        <p className="text-sm text-gray-500">
+                                            {project.collections_count || 0} / {limits.max_collections_per_project}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </motion.div>

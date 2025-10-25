@@ -22,6 +22,10 @@ type Config struct {
 
 	MaxProjectsPerUser   int
 	MaxSchemasPerProject int
+	
+	// Лимиты для коллекций и документов
+	MaxCollectionsPerProject int
+	MaxDocumentsPerCollection int
 
 	BaseURLFormat string
 
@@ -45,6 +49,10 @@ func Load() *Config {
 
 		MaxProjectsPerUser:   env.GetInt("MAX_PROJECTS_PER_USER", 10),
 		MaxSchemasPerProject: env.GetInt("MAX_SCHEMAS_PER_PROJECT", 50),
+		
+		// Лимиты для коллекций и документов
+		MaxCollectionsPerProject: env.GetInt("MAX_COLLECTIONS_PER_PROJECT", 20),
+		MaxDocumentsPerCollection: env.GetInt("MAX_DOCUMENTS_PER_COLLECTION", 500),
 
 		BaseURLFormat: env.GetString("PROJECT_BASE_URL_FORMAT", "https://{api_key}.api.mockingcode.com"),
 

@@ -97,9 +97,8 @@ class APIClient {
     // Projects endpoints
     async getProjects() {
         const response = await this.request('/projects');
-        // Backend возвращает { projects: [...], count: N }
-        // Каждый проект должен содержать collections_count
-        return response.projects || [];
+        // Backend возвращает { projects: [...], count: N, limits: {...} }
+        return response;
     }
 
     async getProject(id) {

@@ -175,7 +175,14 @@ export function ProjectDetail({ project, onBack, onProjectUpdated, onProjectDele
 
             {/* Коллекции */}
             <div className="card">
-                <Collections projectId={project.id} apiKey={project.api_key} />
+                <Collections 
+                    projectId={project.id} 
+                    apiKey={project.api_key} 
+                    limits={project.limits || {
+                        max_collections_per_project: 20,
+                        max_documents_per_collection: 500
+                    }} 
+                />
             </div>
 
             {/* Danger Zone */}
