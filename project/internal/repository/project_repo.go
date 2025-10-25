@@ -62,10 +62,13 @@ func (r *ProjectRepository) CreateProject(project *model.Project) error {
 
 func (r *ProjectRepository) GetUserProjects(userID int64) ([]*model.Project, error) {
 	query := `
-		SELECT id, user_id, name, description, api_key, base_url, created_at, updated_at 
-        FROM projects 
-		WHERE user_id = $1 
-		ORDER BY created_at DESC`
+		SELECT p.id, p.user_id, p.name, p.description, p.api_key, p.base_url, p.created_at, p.updated_at,
+		       COALESCE(COUNT(c.id), 0) as collections_count
+        FROM projects p
+		LEFT JOIN collections c ON p.id = c.project_id AND c.is_active = true
+		WHERE p.user_id = $1 
+		GROUP BY p.id, p.user_id, p.name, p.description, p.api_key, p.base_url, p.created_at, p.updated_at
+		ORDER BY p.created_at DESC`
 
 	rows, err := r.db.Query(query, userID)
 	if err != nil {
@@ -85,6 +88,7 @@ func (r *ProjectRepository) GetUserProjects(userID int64) ([]*model.Project, err
 			&project.BaseURL,
 			&project.CreatedAt,
 			&project.UpdatedAt,
+			&project.CollectionsCount,
 		)
 		if err != nil {
 			return nil, err
