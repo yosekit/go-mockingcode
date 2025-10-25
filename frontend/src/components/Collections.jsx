@@ -29,7 +29,10 @@ export function Collections({ projectId, apiKey }) {
                 loadDocumentCounts(data);
             }
         } catch (err) {
-            setError(err.message);
+            // Не показываем ошибку 401 - она обрабатывается глобально
+            if (err.message && !err.message.includes('HTTP 401')) {
+                setError(err.message);
+            }
         } finally {
             setIsLoading(false);
         }
@@ -75,7 +78,10 @@ export function Collections({ projectId, apiKey }) {
             setNewCollectionDescription('');
             setShowCreateModal(false);
         } catch (err) {
-            setError(err.message);
+            // Не показываем ошибку 401 - она обрабатывается глобально
+            if (err.message && !err.message.includes('HTTP 401')) {
+                setError(err.message);
+            }
         } finally {
             setIsCreating(false);
         }

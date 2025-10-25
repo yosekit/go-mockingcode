@@ -42,6 +42,14 @@ class APIClient {
             const response = await fetch(url, config);
 
             if (!response.ok) {
+                // Обработка ошибки 401 - перенаправление на авторизацию
+                if (response.status === 401) {
+                    this.logout();
+                    // Отправляем событие для обновления состояния авторизации
+                    window.dispatchEvent(new CustomEvent('unauthorized'));
+                    return;
+                }
+
                 const error = await response.json().catch(() => ({ message: response.statusText }));
                 throw new Error(error.message || `HTTP ${response.status}`);
             }
@@ -82,6 +90,8 @@ class APIClient {
 
     logout() {
         this.setToken(null);
+        // Очищаем токен из localStorage
+        localStorage.removeItem('token');
     }
 
     // Projects endpoints

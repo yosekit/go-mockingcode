@@ -39,7 +39,10 @@ export function CollectionDataEditor({ apiKey, collection, onClose, projectId, o
             
             setDocuments(sortedDocs);
         } catch (err) {
-            setError(err.message);
+            // Не показываем ошибку 401 - она обрабатывается глобально
+            if (err.message && !err.message.includes('HTTP 401')) {
+                setError(err.message);
+            }
         } finally {
             setIsLoading(false);
         }

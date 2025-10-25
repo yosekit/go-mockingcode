@@ -26,7 +26,10 @@ export function ProjectDetail({ project, onBack, onProjectUpdated, onProjectDele
             onProjectUpdated({ ...project, ...updated });
             setIsEditing(false);
         } catch (err) {
-            setError(err.message);
+            // Не показываем ошибку 401 - она обрабатывается глобально
+            if (err.message && !err.message.includes('HTTP 401')) {
+                setError(err.message);
+            }
         } finally {
             setIsSaving(false);
         }

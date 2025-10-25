@@ -93,7 +93,10 @@ export function SchemaEditor({ collection, apiKey, onSave, onCancel }) {
             await onSave(fields, false); // false = не закрывать окно
             setIsEditMode(false); // Возвращаемся к генератору
         } catch (err) {
-            setError(err.message);
+            // Не показываем ошибку 401 - она обрабатывается глобально
+            if (err.message && !err.message.includes('HTTP 401')) {
+                setError(err.message);
+            }
         } finally {
             setIsSaving(false);
         }
@@ -132,7 +135,10 @@ export function SchemaEditor({ collection, apiKey, onSave, onCancel }) {
             // Закрываем окно
             onCancel();
         } catch (err) {
-            setError(err.message);
+            // Не показываем ошибку 401 - она обрабатывается глобально
+            if (err.message && !err.message.includes('HTTP 401')) {
+                setError(err.message);
+            }
         } finally {
             setIsSaving(false);
         }

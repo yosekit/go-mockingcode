@@ -14,6 +14,19 @@ export function useAuth() {
             // TODO: можно добавить запрос /auth/me для получения данных пользователя
         }
         setIsLoading(false);
+        
+        // Глобальный обработчик ошибок 401
+        const handleUnauthorized = () => {
+            setIsAuthenticated(false);
+            setUser(null);
+        };
+        
+        // Добавляем обработчик для глобальных ошибок 401
+        window.addEventListener('unauthorized', handleUnauthorized);
+        
+        return () => {
+            window.removeEventListener('unauthorized', handleUnauthorized);
+        };
     }, []);
 
     const login = async (email, password) => {
