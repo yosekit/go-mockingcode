@@ -51,7 +51,7 @@ export function ProjectDetail({ project, onBack, onProjectUpdated, onProjectDele
         // TODO: показать toast уведомление
     };
 
-    const apiUrl = `http://localhost:8080/${project.api_key}`;
+    const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/${project.api_key}`;
 
     return (
         <div className="space-y-6">

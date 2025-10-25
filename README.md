@@ -1,138 +1,163 @@
-# MockingCode
+# MockingCode - Система управления Mock-данными
 
-Backend-as-a-Service platform for mock data generation and API prototyping.
+## 🚀 Быстрый старт
 
-## Architecture
-
-Microservices-based platform built with Go.
-
-**Services:**
-- Gateway (8080) - API Gateway with authentication
-- Auth Service (8081) - User authentication and JWT tokens
-- Project Service (8082) - Project and schema management
-- Data Service (8083) - Mock data CRUD operations
-
-**Databases:**
-- PostgreSQL - Users, projects, schemas
-- MongoDB - Mock data storage
-
-## Quick Start
-
+### 1. Клонирование и настройка
 ```bash
-# Start all services
+git clone <repository-url>
+cd mockingcode
+```
+
+### 2. Настройка переменных окружения
+```bash
+# Скопируйте пример конфигурации
+cp .env.example .env
+
+# Отредактируйте .env файл под ваши нужды
+nano .env
+```
+
+### 3. Запуск через Docker Compose
+```bash
+# Запуск всех сервисов
 docker-compose -f docker/docker-compose.dev.yml up -d
 
-# Check status
+# Проверка статуса
 docker-compose -f docker/docker-compose.dev.yml ps
+```
 
-# View logs
+### 4. Запуск фронтенда
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+## 🔧 Конфигурация
+
+### Переменные окружения
+
+#### Frontend (Vite)
+- `VITE_API_URL` - URL API Gateway (по умолчанию: `http://localhost:8080`)
+
+#### Gateway
+- `GATEWAY_PORT` - Порт Gateway (по умолчанию: `8080`)
+- `AUTH_SERVICE_URL` - URL Auth сервиса
+- `PROJECT_SERVICE_URL` - URL Project сервиса  
+- `DATA_SERVICE_URL` - URL Data сервиса
+
+#### Микросервисы
+- `AUTH_PORT` - Порт Auth сервиса (по умолчанию: `8081`)
+- `PROJECT_PORT` - Порт Project сервиса (по умолчанию: `8082`)
+- `DATA_PORT` - Порт Data сервиса (по умолчанию: `8083`)
+
+#### Базы данных
+- `POSTGRES_HOST` - Хост PostgreSQL (по умолчанию: `localhost`)
+- `POSTGRES_PORT` - Порт PostgreSQL (по умолчанию: `5432`)
+- `MONGO_HOST` - Хост MongoDB (по умолчанию: `localhost`)
+- `MONGO_PORT` - Порт MongoDB (по умолчанию: `27017`)
+
+#### Лимиты
+- `MAX_PROJECTS_PER_USER` - Максимум проектов на пользователя (по умолчанию: `10`)
+- `MAX_COLLECTIONS_PER_PROJECT` - Максимум коллекций на проект (по умолчанию: `20`)
+- `MAX_DOCUMENTS_PER_COLLECTION` - Максимум документов на коллекцию (по умолчанию: `500`)
+
+## 🏗️ Архитектура
+
+```
+Frontend (React/Preact)
+    ↓ HTTP
+Gateway (API Gateway + CORS)
+    ↓ HTTP
+┌─────────────────┬─────────────────┬─────────────────┐
+│   Auth Service  │ Project Service │  Data Service   │
+│   (JWT)         │ (PostgreSQL)    │ (MongoDB)      │
+└─────────────────┴─────────────────┴─────────────────┘
+```
+
+## 🚀 Развертывание в продакшене
+
+### 1. Настройка домена
+```bash
+# В .env файле
+PRODUCTION_DOMAIN=yourdomain.com
+PRODUCTION_API_URL=https://api.yourdomain.com
+```
+
+### 2. SSL сертификаты
+```bash
+# В .env файле
+SSL_CERT_PATH=/etc/ssl/certs/yourdomain.crt
+SSL_KEY_PATH=/etc/ssl/private/yourdomain.key
+```
+
+### 3. Nginx конфигурация (опционально)
+```nginx
+server {
+    listen 443 ssl;
+    server_name api.yourdomain.com;
+    
+    ssl_certificate /etc/ssl/certs/yourdomain.crt;
+    ssl_certificate_key /etc/ssl/private/yourdomain.key;
+    
+    location / {
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
+}
+```
+
+## 🛠️ Разработка
+
+### Hot-reloading для микросервисов
+```bash
+# Установка air
+go install github.com/air-verse/air@latest
+
+# Запуск с hot-reloading
+cd data && air
+cd project && air  
+cd auth && air
+cd gateway && air
+```
+
+### Тестирование API
+```bash
+# Проверка здоровья сервисов
+curl http://localhost:8080/health
+curl http://localhost:8081/health
+curl http://localhost:8082/health
+curl http://localhost:8083/health
+```
+
+## 📚 API Документация
+
+- Gateway: http://localhost:8080/swagger
+- Auth: http://localhost:8081/swagger
+- Project: http://localhost:8082/swagger
+- Data: http://localhost:8083/swagger
+
+## 🐛 Отладка
+
+### Логи сервисов
+```bash
+# Просмотр логов всех сервисов
 docker-compose -f docker/docker-compose.dev.yml logs -f
 
-# Stop services
-docker-compose -f docker/docker-compose.dev.yml down
-```
-
-## API Endpoints
-
-Base URL: `http://localhost:8080`
-
-**Authentication:**
-- `POST /auth/register` - User registration
-- `POST /auth/login` - User login
-- `POST /auth/refresh` - Refresh token
-
-**Projects (requires JWT):**
-- `GET/POST /api/projects` - List/Create projects
-- `GET/PUT/DELETE /api/projects/{id}` - Manage project
-- `GET/POST /api/projects/{id}/collections` - List/Create collections
-- `GET/PUT/DELETE /api/projects/{id}/collections/{collectionId}` - Manage collection
-
-**Data (requires JWT):**
-- `GET/POST /data/{collection}` - List/Create documents
-- `GET/PUT/DELETE /data/{collection}/{id}` - Manage document
-
-**Admin:**
-- `GET /admin/log-level` - Get current log level
-- `PUT /admin/log-level?level=debug` - Change log level (debug|info|warn|error)
-
-## Testing
-
-```bash
-./tests/gateway_test.sh
-```
-
-## Development
-
-**Structure:**
-```
-mockingcode/
-├── auth/           - Authentication service
-├── project/        - Project management service  
-├── data/           - Data service
-├── gateway/        - API Gateway
-├── pkg/            - Shared modules (models, logger)
-├── docker/         - Docker configuration
-└── tests/          - Integration tests
-```
-
-**Commands:**
-```bash
-# Rebuild specific service
-docker-compose -f docker/docker-compose.dev.yml build gateway
-
-# View logs
+# Логи конкретного сервиса
 docker-compose -f docker/docker-compose.dev.yml logs -f gateway
-
-# Run local service
-cd auth && go run cmd/server/main.go
 ```
 
-## Configuration
-
-Environment variables in `docker/.env`:
-
-```env
-DB_NAME=mockdb
-DB_USER=mockuser
-DB_PASSWORD=mockpass
-MONGO_PORT=27017
-AUTH_PORT=8081
-PROJECT_PORT=8082
-DATA_PORT=8083
-GATEWAY_PORT=8080
-JWT_SECRET=your-secret-key
-LOG_LEVEL=info
-LOG_FORMAT=text
+### Проверка подключений
+```bash
+# Проверка доступности сервисов
+curl http://localhost:8080/health
+curl http://localhost:8081/health
+curl http://localhost:8082/health
+curl http://localhost:8083/health
 ```
 
-## Documentation
+## 📝 Лицензия
 
-Swagger UI available for each service:
-- `http://localhost:8080/swagger/` - Gateway
-- `http://localhost:8081/swagger/` - Auth
-- `http://localhost:8082/swagger/` - Project
-- `http://localhost:8083/swagger/` - Data
-
-## Ports
-
-- 8080 - Gateway
-- 8081 - Auth Service
-- 8082 - Project Service
-- 8083 - Data Service
-- 5432 - PostgreSQL
-- 27017 - MongoDB
-
-## Features
-
-- JWT-based authentication
-- API Gateway Pattern with centralized auth
-- Structured logging with dynamic log levels
-- Docker-based deployment
-- RESTful API
-- Mock data generation
-- Go workspace monorepo
-
-## License
-
-MIT
-
+MIT License

@@ -147,12 +147,12 @@ export function Projects({ onSelectProject }) {
                                     <span className="text-gray-400 block mb-1">API-адрес</span>
                                     <div className="flex items-center gap-2 bg-dark-900 rounded px-2 py-1.5">
                                         <code className="text-primary-400 font-mono text-xs flex-1 truncate">
-                                            {`http://localhost:8080/${project.api_key}`}
+                                            {`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/${project.api_key}`}
                                         </code>
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                copyToClipboard(`http://localhost:8080/${project.api_key}`);
+                                                copyToClipboard(`${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/${project.api_key}`);
                                             }}
                                             className="text-gray-400 hover:text-white transition-colors flex-shrink-0"
                                             title="Копировать URL"

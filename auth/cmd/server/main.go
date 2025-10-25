@@ -15,7 +15,6 @@ import (
 	"github.com/go-mockingcode/auth/internal/service"
 	applogger "github.com/go-mockingcode/logger"
 	pb "github.com/go-mockingcode/proto"
-	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 
 	_ "github.com/go-mockingcode/auth/docs"
@@ -41,10 +40,11 @@ import (
 // @in header
 // @name Authorization
 func main() {
-	// DEV
-	if err := godotenv.Load(".env"); err != nil {
-		log.Println("No .env file found, using system environment variables")
-	}
+	// DEV - загрузка .env файла отключена для Docker
+	// Docker Compose передает переменные через env_file
+	// if err := godotenv.Load(".env"); err != nil {
+	//	log.Println("No .env file found, using system environment variables")
+	// }
 
 	// Load Configuration
 	cfg := config.Load()
