@@ -16,7 +16,6 @@ import (
 	"github.com/go-mockingcode/project/internal/service"
 	applogger "github.com/go-mockingcode/logger"
 	pb "github.com/go-mockingcode/proto"
-	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 
 	_ "github.com/go-mockingcode/project/docs"
@@ -43,10 +42,11 @@ import (
 // @name Authorization
 // @description Enter the token with the `Bearer ` prefix, e.g. "Bearer abcde12345"
 func main() {
-	// DEV
-	if err := godotenv.Load(".env"); err != nil {
-		log.Println("No .env file found, using system environment variables")
-	}
+	// DEV - загрузка .env файла отключена для Docker
+	// Docker Compose передает переменные через env_file
+	// if err := godotenv.Load(".env"); err != nil {
+	//	log.Println("No .env file found, using system environment variables")
+	// }
 
 	// Load Configuration
 	cfg := config.Load()

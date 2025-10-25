@@ -24,6 +24,8 @@ services:
     ports:
       - "${AUTH_PORT:-8081}:8081"
       - "${AUTH_GRPC_PORT:-9081}:9081"
+    env_file:
+      - .env
     environment:
       - PORT=8081
       - GRPC_PORT=9081
@@ -45,6 +47,8 @@ services:
     ports:
       - "${PROJECT_PORT:-8082}:8082"
       - "${PROJECT_GRPC_PORT:-9082}:9082"
+    env_file:
+      - .env
     environment:
       - PROJECT_PORT=8082
       - GRPC_PORT=9082
@@ -72,6 +76,8 @@ services:
       dockerfile: data/Dockerfile
     ports:
       - "${DATA_PORT:-8083}:8083"
+    env_file:
+      - .env
     environment:
       - PORT=8083
       - MONGO_URI=mongodb://mongodb:27017
@@ -89,13 +95,15 @@ services:
       dockerfile: gateway/Dockerfile
     ports:
       - "${GATEWAY_PORT:-8080}:8080"
+    env_file:
+      - .env
     environment:
-      - GATEWAY_PORT=8080
-      - AUTH_SERVICE_URL=http://auth:8081
-      - PROJECT_SERVICE_URL=http://project:8082
-      - DATA_SERVICE_URL=http://data:8083
-      - AUTH_GRPC_URL=auth:9081
-      - PROJECT_GRPC_URL=project:9082
+      - GATEWAY_PORT=${GATEWAY_PORT:-8080}
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://auth:8081}
+      - PROJECT_SERVICE_URL=${PROJECT_SERVICE_URL:-http://project:8082}
+      - DATA_SERVICE_URL=${DATA_SERVICE_URL:-http://data:8083}
+      - AUTH_GRPC_URL=${AUTH_GRPC_URL:-auth:9081}
+      - PROJECT_GRPC_URL=${PROJECT_GRPC_URL:-project:9082}
       - LOG_LEVEL=${LOG_LEVEL:-info}
       - LOG_FORMAT=${LOG_FORMAT:-text}
     depends_on:

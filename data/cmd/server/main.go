@@ -13,7 +13,6 @@ import (
 	"github.com/go-mockingcode/data/internal/repository"
 	"github.com/go-mockingcode/data/internal/service"
 	applogger "github.com/go-mockingcode/logger"
-	"github.com/joho/godotenv"
 
 	_ "github.com/go-mockingcode/data/docs"
 	httpSwagger "github.com/swaggo/http-swagger"
@@ -34,10 +33,11 @@ import (
 // @host localhost:8083
 // @BasePath /
 func main() {
-	// Load .env
-	if err := godotenv.Load(".env"); err != nil {
-		log.Println("No .env file found, using system environment variables")
-	}
+	// DEV - загрузка .env файла отключена для Docker
+	// Docker Compose передает переменные через env_file
+	// if err := godotenv.Load(".env"); err != nil {
+	//	log.Println("No .env file found, using system environment variables")
+	// }
 
 	// Load Config
 	cfg := config.Load()

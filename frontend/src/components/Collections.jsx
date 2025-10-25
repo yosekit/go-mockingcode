@@ -220,7 +220,7 @@ export function Collections({ projectId, apiKey, limits }) {
                                         <button
                                             onClick={(e) => {
                                                 e.stopPropagation();
-                                                const apiUrl = `http://localhost:8080/${apiKey}/${collection.name}`;
+                                                const apiUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:8080'}/${apiKey}/${collection.name}`;
                                                 window.open(apiUrl, '_blank');
                                             }}
                                             className="p-1.5 text-gray-400 hover:text-blue-400 transition-all duration-200 hover:scale-110"
