@@ -4,7 +4,7 @@
 
 ### 1. Клонирование и настройка
 ```bash
-git clone <repository-url>
+git clone https://github.com/yosekit/go-mockingcode
 cd mockingcode
 ```
 
